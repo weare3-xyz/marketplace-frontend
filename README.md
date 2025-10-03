@@ -745,4 +745,23 @@ Built with:
 
 ---
 
-**Last Updated:** January 2025
+**Last Updated:** Oct 2025
+
+Potential Use Cases
+
+  1. NFT Marketplace (current implementation)
+    - List on Base, buy from Polygon with auto-bridging
+    - Gasless listings for artists
+    - Batch buy multiple NFTs
+  2. DeFi Aggregator
+    - Swap on multiple DEXs in one transaction
+    - Cross-chain yield farming
+    - Rebalance portfolio across chains
+  3. Gaming
+    - Buy in-game items on multiple chains
+    - Gasless transactions for better UX
+    - Cross-chain inventory management
+  4. Social/Creator Platform
+    - Tips across chains
+    - Subscriptions with gasless UX
+    - Revenue splits on multiple chains
