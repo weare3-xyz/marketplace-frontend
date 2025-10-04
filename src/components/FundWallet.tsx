@@ -87,10 +87,10 @@ export default function FundWallet({ walletAddress }: FundWalletProps) {
       border: '1px solid #e0e0e0'
     }}>
       <div style={{ marginBottom: '1rem' }}>
-        <h3 style={{ margin: '0 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <h3 style={{ margin: '0 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#000' }}>
           💳 Fund Your Wallet
         </h3>
-        <p style={{ margin: 0, fontSize: '0.9rem', color: '#666' }}>
+        <p style={{ margin: 0, fontSize: '0.9rem', color: '#000' }}>
           Buy crypto with card, Apple Pay, or Google Pay
         </p>
       </div>
@@ -98,7 +98,7 @@ export default function FundWallet({ walletAddress }: FundWalletProps) {
       <div className="fund-wallet-form">
         {/* Chain Selection */}
         <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.9rem' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.9rem', color: '#000' }}>
             Select Chain
           </label>
           <select
@@ -110,7 +110,8 @@ export default function FundWallet({ walletAddress }: FundWalletProps) {
               borderRadius: '8px',
               border: '1px solid #ddd',
               fontSize: '0.95rem',
-              backgroundColor: 'white'
+              backgroundColor: 'white',
+              color: '#000'
             }}
             disabled={loading}
           >
@@ -124,7 +125,7 @@ export default function FundWallet({ walletAddress }: FundWalletProps) {
 
         {/* Token Selection */}
         <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.9rem' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.9rem', color: '#000' }}>
             Token to Buy
           </label>
           <select
@@ -136,7 +137,8 @@ export default function FundWallet({ walletAddress }: FundWalletProps) {
               borderRadius: '8px',
               border: '1px solid #ddd',
               fontSize: '0.95rem',
-              backgroundColor: 'white'
+              backgroundColor: 'white',
+              color: '#000'
             }}
             disabled={loading}
           >
@@ -147,7 +149,7 @@ export default function FundWallet({ walletAddress }: FundWalletProps) {
             ))}
           </select>
           {selectedToken === 'USDC' && (
-            <p style={{ fontSize: '0.8rem', color: '#0066cc', margin: '0.5rem 0 0 0' }}>
+            <p style={{ fontSize: '0.8rem', color: '#000', margin: '0.5rem 0 0 0' }}>
               ✓ Recommended for NFT marketplace purchases
             </p>
           )}
@@ -155,7 +157,7 @@ export default function FundWallet({ walletAddress }: FundWalletProps) {
 
         {/* Amount Input */}
         <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.9rem' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.9rem', color: '#000' }}>
             Amount (USD)
           </label>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -164,29 +166,27 @@ export default function FundWallet({ walletAddress }: FundWalletProps) {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="Enter amount"
-              min="20"
+              min="1"
               max="10000"
-              step="10"
+              step="1"
               style={{
                 flex: 1,
                 padding: '0.75rem',
                 borderRadius: '8px',
                 border: '1px solid #ddd',
-                fontSize: '0.95rem'
+                fontSize: '0.95rem',
+                color: '#000'
               }}
               disabled={loading}
             />
-            <span style={{ fontWeight: '500', minWidth: '50px' }}>USD</span>
+            <span style={{ fontWeight: '500', minWidth: '50px', color: '#000' }}>USD</span>
           </div>
-          <p style={{ fontSize: '0.8rem', color: '#666', margin: '0.5rem 0 0 0' }}>
-            Minimum: $20 USD
-          </p>
         </div>
 
         {/* Buy Button */}
         <button
           onClick={handleFundWallet}
-          disabled={loading || Number(amount) < 20}
+          disabled={loading || Number(amount) < 1}
           className="primary-button"
           style={{
             width: '100%',
@@ -232,28 +232,17 @@ export default function FundWallet({ walletAddress }: FundWalletProps) {
         )}
 
         {/* Info Box */}
-        <div style={{
+        {/* <div style={{
           padding: '1rem',
           backgroundColor: '#fff',
           borderRadius: '8px',
           fontSize: '0.85rem',
-          color: '#666',
+          color: '#000',
           border: '1px solid #e0e0e0'
-        }}>
-          <p style={{ margin: '0 0 0.5rem 0' }}>
-            <strong>💡 Payment Methods:</strong>
-          </p>
-          <ul style={{ margin: '0', paddingLeft: '1.5rem' }}>
-            <li>Debit cards (recommended)</li>
-            <li>Credit cards</li>
-            <li>Apple Pay</li>
-            <li>Google Pay</li>
-          </ul>
-          <p style={{ margin: '0.75rem 0 0 0', fontSize: '0.8rem' }}>
-            Powered by MoonPay & Coinbase Onramp • Mainnet only • Fees apply
-          </p>
+        }}> */}
+
         </div>
       </div>
-    </div>
+    // </div>
   )
 }
