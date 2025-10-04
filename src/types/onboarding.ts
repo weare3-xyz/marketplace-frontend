@@ -10,6 +10,7 @@ export interface UserProfile {
   role: UserRole
   username: string
   walletAddress: string
+  profileImageUrl?: string // IPFS URL from Pinata
   onboardingCompleted: boolean
   createdAt: string
 }

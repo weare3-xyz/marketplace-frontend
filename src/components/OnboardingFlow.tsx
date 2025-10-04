@@ -23,6 +23,7 @@ export default function OnboardingFlow({ walletAddress, onComplete }: Onboarding
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('role-selection')
   const [role, setRole] = useState<UserRole | null>(null)
   const [username, setUsername] = useState<string | null>(null)
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null)
 
   // Load saved progress on mount
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function OnboardingFlow({ walletAddress, onComplete }: Onboarding
         const progress = JSON.parse(saved)
         if (progress.role) setRole(progress.role)
         if (progress.username) setUsername(progress.username)
+        if (progress.profileImageUrl) setProfileImageUrl(progress.profileImageUrl)
         if (progress.currentStep) setCurrentStep(progress.currentStep)
       } catch (error) {
         console.error('Failed to load onboarding progress:', error)
@@ -44,18 +46,21 @@ export default function OnboardingFlow({ walletAddress, onComplete }: Onboarding
     if (role || username) {
       localStorage.setItem(
         ONBOARDING_STORAGE_KEY,
-        JSON.stringify({ currentStep, role, username })
+        JSON.stringify({ currentStep, role, username, profileImageUrl })
       )
     }
-  }, [currentStep, role, username])
+  }, [currentStep, role, username, profileImageUrl])
 
   const handleRoleSelect = (selectedRole: UserRole) => {
     setRole(selectedRole)
     setCurrentStep('username-setup')
   }
 
-  const handleUsernameSet = (selectedUsername: string) => {
+  const handleUsernameSet = (selectedUsername: string, imageUrl?: string) => {
     setUsername(selectedUsername)
+    if (imageUrl) {
+      setProfileImageUrl(imageUrl)
+    }
     setCurrentStep('wallet-display')
   }
 
@@ -78,6 +83,7 @@ export default function OnboardingFlow({ walletAddress, onComplete }: Onboarding
       role,
       username,
       walletAddress,
+      ...(profileImageUrl && { profileImageUrl }),
       onboardingCompleted: true,
       createdAt: new Date().toISOString()
     }

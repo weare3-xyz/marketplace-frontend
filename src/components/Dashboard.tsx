@@ -42,17 +42,48 @@ export default function Dashboard({ userProfile }: DashboardProps) {
       {/* Dashboard Header */}
       <div className="dashboard-header">
         <div className="user-profile-section">
-          <div className="profile-info">
-            <div
-              className="role-badge"
-              style={{ backgroundColor: getRoleColor(userProfile.role) }}
-            >
-              {getRoleIcon(userProfile.role)} {userProfile.role}
+          <div className="profile-info" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            {/* Profile Picture */}
+            {userProfile.profileImageUrl ? (
+              <img
+                src={userProfile.profileImageUrl}
+                alt={`${userProfile.username}'s profile`}
+                style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: `3px solid ${getRoleColor(userProfile.role)}`
+                }}
+              />
+            ) : (
+              <div style={{
+                width: '80px',
+                height: '80px',
+                borderRadius: '50%',
+                backgroundColor: getRoleColor(userProfile.role),
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '2rem'
+              }}>
+                {getRoleIcon(userProfile.role)}
+              </div>
+            )}
+
+            {/* Profile Details */}
+            <div>
+              <div
+                className="role-badge"
+                style={{ backgroundColor: getRoleColor(userProfile.role) }}
+              >
+                {getRoleIcon(userProfile.role)} {userProfile.role}
+              </div>
+              <h1>@{userProfile.username}</h1>
+              <p className="wallet-address-short">
+                {userProfile.walletAddress.slice(0, 6)}...{userProfile.walletAddress.slice(-4)}
+              </p>
             </div>
-            <h1>@{userProfile.username}</h1>
-            <p className="wallet-address-short">
-              {userProfile.walletAddress.slice(0, 6)}...{userProfile.walletAddress.slice(-4)}
-            </p>
           </div>
 
           <div className="quick-actions">

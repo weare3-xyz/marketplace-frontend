@@ -1,15 +1,16 @@
 /**
  * UsernameSetup Component
  *
- * Second step of onboarding - user sets their username
+ * Second step of onboarding - user sets their username and profile picture
  */
 
 import { useState } from 'react'
 import type { UserRole } from '../../types/onboarding'
+import { uploadImageToPinata, validateImageFile, isPinataConfigured } from '../../lib/pinata'
 
 interface UsernameSetupProps {
   role: UserRole
-  onUsernameSet: (username: string) => void
+  onUsernameSet: (username: string, profileImageUrl?: string) => void
   onBack: () => void
 }
 
@@ -17,6 +18,12 @@ export default function UsernameSetup({ role, onUsernameSet, onBack }: UsernameS
   const [username, setUsername] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isChecking, setIsChecking] = useState(false)
+
+  // Profile image state
+  const [profileImage, setProfileImage] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [imageError, setImageError] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
 
   const validateUsername = (value: string): string | null => {
     if (value.length < 3) {
@@ -59,6 +66,34 @@ export default function UsernameSetup({ role, onUsernameSet, onBack }: UsernameS
     return true
   }
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate image
+    const validation = validateImageFile(file)
+    if (validation !== true) {
+      setImageError(validation)
+      return
+    }
+
+    // Set image and create preview
+    setProfileImage(file)
+    setImageError(null)
+
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const removeImage = () => {
+    setProfileImage(null)
+    setImagePreview(null)
+    setImageError(null)
+  }
+
   const handleContinue = async () => {
     if (error || !username) return
 
@@ -70,7 +105,25 @@ export default function UsernameSetup({ role, onUsernameSet, onBack }: UsernameS
       existingUsernames.push(username)
       localStorage.setItem('taken_usernames', JSON.stringify(existingUsernames))
 
-      onUsernameSet(username)
+      // Upload profile image to Pinata if provided
+      let profileImageUrl: string | undefined
+
+      if (profileImage && isPinataConfigured()) {
+        try {
+          setIsUploading(true)
+          profileImageUrl = await uploadImageToPinata(profileImage)
+          console.log('✅ Profile image uploaded:', profileImageUrl)
+        } catch (err) {
+          console.error('Failed to upload profile image:', err)
+          setImageError('Failed to upload image. You can continue without it.')
+          setIsUploading(false)
+          return
+        } finally {
+          setIsUploading(false)
+        }
+      }
+
+      onUsernameSet(username, profileImageUrl)
     }
   }
 
@@ -93,6 +146,65 @@ export default function UsernameSetup({ role, onUsernameSet, onBack }: UsernameS
       </div>
 
       <div className="username-setup-container">
+        {/* Profile Picture Upload */}
+        <div className="profile-picture-section" style={{ marginBottom: '2rem' }}>
+          <label style={{ display: 'block', fontWeight: '600', marginBottom: '1rem', color: '#000' }}>
+            Profile Picture (Optional)
+          </label>
+
+          {!imagePreview ? (
+            <div>
+              <label htmlFor="profile-image" style={{
+                display: 'inline-block',
+                padding: '0.75rem 1.5rem',
+                backgroundColor: '#667eea',
+                color: 'white',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}>
+                📷 Choose Image
+              </label>
+              <input
+                id="profile-image"
+                type="file"
+                accept="image/*"
+                onChange={handleImageSelect}
+                style={{ display: 'none' }}
+              />
+              <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+                JPEG, PNG, GIF or WebP • Max 5MB
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <img
+                src={imagePreview}
+                alt="Profile preview"
+                style={{
+                  width: '100px',
+                  height: '100px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '3px solid #667eea'
+                }}
+              />
+              <button
+                onClick={removeImage}
+                className="secondary-button"
+                type="button"
+              >
+                Remove
+              </button>
+            </div>
+          )}
+
+          {imageError && (
+            <p className="error-message">❌ {imageError}</p>
+          )}
+        </div>
+
+        {/* Username Input */}
         <div className="username-input-wrapper">
           <label htmlFor="username">Username</label>
           <div className="input-group">
@@ -104,7 +216,6 @@ export default function UsernameSetup({ role, onUsernameSet, onBack }: UsernameS
               onChange={handleUsernameChange}
               placeholder="your_username"
               maxLength={20}
-              autoFocus
               className={error ? 'error' : ''}
             />
             {username && !error && !isChecking && (
@@ -153,10 +264,10 @@ export default function UsernameSetup({ role, onUsernameSet, onBack }: UsernameS
         </button>
         <button
           onClick={handleContinue}
-          disabled={!username || !!error || isChecking}
+          disabled={!username || !!error || isChecking || isUploading}
           className="primary-button"
         >
-          {isChecking ? 'Checking...' : 'Continue'}
+          {isUploading ? 'Uploading Image...' : isChecking ? 'Checking...' : 'Continue'}
         </button>
       </div>
     </div>
