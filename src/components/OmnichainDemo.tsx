@@ -310,29 +310,6 @@ export default function OmnichainDemo() {
         </div>
       )}
 
-      <div className="info-box" style={{
-        marginTop: '1rem',
-        padding: '1rem',
-        backgroundColor: '#f5f5f5',
-        borderRadius: '8px'
-      }}>
-        <h4>📝 Test Descriptions</h4>
-        <ol style={{ fontSize: '0.9rem' }}>
-          <li>
-            <strong>Simple Transfer:</strong> Sends 0 ETH to yourself on Base. Tests basic MEE execution with gasless transaction.
-          </li>
-          <li>
-            <strong>Multi-Chain:</strong> Transfers 0.1 USDC on both Optimism AND Base in ONE signature. Tests cross-chain orchestration. (Requires USDC on Optimism)
-          </li>
-          <li>
-            <strong>Check Addresses:</strong> Verifies your address is identical on all 5 chains (EIP-7702 mode). Check browser console for details.
-          </li>
-        </ol>
-
-        <p style={{ marginTop: '1rem', fontSize: '0.9rem', color: '#666' }}>
-          <strong>Note:</strong> Both tests are gasless (sponsored). Test #2 requires ~0.1 USDC on Optimism and Base to perform the transfers (not for gas).
-        </p>
-      </div>
     </div>
   )
 }

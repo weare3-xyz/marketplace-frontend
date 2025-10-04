@@ -6,7 +6,7 @@
 
 import { useWallets } from '@privy-io/react-auth'
 import OmnichainDemo from './OmnichainDemo'
-import BiconomyDemo from './BiconomyDemo'
+// import BiconomyDemo from './BiconomyDemo'
 import FundWallet from './FundWallet'
 import type { UserProfile } from '../types/onboarding'
 
@@ -90,17 +90,17 @@ export default function Dashboard({ userProfile }: DashboardProps) {
         </div>
 
         {/* Original Demo - Hidden by default */}
-        <details className="dashboard-section">
+        {/* <details className="dashboard-section">
           <summary className="section-header">
             <h2>🔧 Advanced: Biconomy Demo</h2>
           </summary>
           <div className="section-content">
             {embeddedWallet && <BiconomyDemo wallet={embeddedWallet} />}
           </div>
-        </details>
+        </details> */}
 
         {/* Role-Specific Sections */}
-        {userProfile.role === 'artist' && (
+        {/* {userProfile.role === 'artist' && (
           <div className="dashboard-section role-specific artist-section">
             <div className="section-header">
               <h2>🎨 Artist Tools</h2>
@@ -140,7 +140,7 @@ export default function Dashboard({ userProfile }: DashboardProps) {
               </div>
             </div>
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Dashboard Footer */}
