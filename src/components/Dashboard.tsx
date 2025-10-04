@@ -4,10 +4,10 @@
  * Main marketplace dashboard after onboarding is complete
  */
 
-import { useWallets, usePrivy } from '@privy-io/react-auth'
+import { usePrivy } from '@privy-io/react-auth'
 import OmnichainDemo from './OmnichainDemo'
 // import BiconomyDemo from './BiconomyDemo'
-import FundWallet from './FundWallet'
+// import FundWallet from './FundWallet'
 import type { UserProfile } from '../types/onboarding'
 
 interface DashboardProps {
@@ -15,9 +15,9 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ userProfile }: DashboardProps) {
-  const { wallets } = useWallets()
+  // const { wallets } = useWallets()
   const { logout } = usePrivy()
-  const embeddedWallet = wallets.find((w) => w.walletClientType === 'privy')
+  //  const embeddedWallet = wallets.find((w) => w.walletClientType === 'privy')
 
   const getRoleIcon = (role: string): string => {
     const icons: Record<string, string> = {
@@ -56,10 +56,6 @@ export default function Dashboard({ userProfile }: DashboardProps) {
           </div>
 
           <div className="quick-actions">
-            <button className="action-button">
-              <span>🖼️</span>
-              <span>My NFTs</span>
-            </button>
             <button className="action-button" onClick={logout}>
               <span>🚪</span>
               <span>Logout</span>
@@ -70,21 +66,8 @@ export default function Dashboard({ userProfile }: DashboardProps) {
 
       {/* Main Content */}
       <div className="dashboard-content">
-        {/* Funding Section - Collapsible */}
-        <details className="dashboard-section">
-          <summary className="section-header">
-            <h2>💳 Fund Your Wallet</h2>
-          </summary>
-          <div className="section-content">
-            {embeddedWallet && <FundWallet walletAddress={embeddedWallet.address} />}
-          </div>
-        </details>
-
         {/* Omnichain Marketplace - Main Feature */}
         <div className="dashboard-section">
-          <div className="section-header">
-            <h2>🌐 Omnichain Marketplace</h2>
-          </div>
           <div className="section-content">
             <OmnichainDemo />
           </div>

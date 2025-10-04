@@ -231,18 +231,7 @@ export default function FundWallet({ walletAddress }: FundWalletProps) {
           </div>
         )}
 
-        {/* Info Box */}
-        {/* <div style={{
-          padding: '1rem',
-          backgroundColor: '#fff',
-          borderRadius: '8px',
-          fontSize: '0.85rem',
-          color: '#000',
-          border: '1px solid #e0e0e0'
-        }}> */}
-
-        </div>
       </div>
-    // </div>
+    </div>
   )
 }

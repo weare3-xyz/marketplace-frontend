@@ -196,9 +196,9 @@ export default function OmnichainDemo() {
   if (isLoading) {
     return (
       <div className="omnichain-demo">
-        <h3>Omnichain Demo</h3>
-        <p>⏳ Initializing omnichain marketplace...</p>
-        <p style={{ fontSize: '0.9rem', color: '#666' }}>
+        <h3 style={{ color: '#000' }}>Omnichain Demo</h3>
+        <p style={{ color: '#000' }}>⏳ Initializing omnichain marketplace...</p>
+        <p style={{ fontSize: '0.9rem', color: '#000' }}>
           Setting up orchestrator, MEE client, and authorizations...
         </p>
       </div>
@@ -208,8 +208,8 @@ export default function OmnichainDemo() {
   if (error) {
     return (
       <div className="omnichain-demo">
-        <h3>Omnichain Demo</h3>
-        <div style={{ color: 'red', padding: '1rem', backgroundColor: '#fee' }}>
+        <h3 style={{ color: '#000' }}>Omnichain Demo</h3>
+        <div style={{ color: '#c62828', padding: '1rem', backgroundColor: '#ffebee' }}>
           <strong>Initialization Error:</strong>
           <p>{error}</p>
         </div>
@@ -220,15 +220,15 @@ export default function OmnichainDemo() {
   if (!isInitialized) {
     return (
       <div className="omnichain-demo">
-        <h3>Omnichain Demo</h3>
-        <p>Waiting for initialization...</p>
+        <h3 style={{ color: '#000' }}>Omnichain Demo</h3>
+        <p style={{ color: '#000' }}>Waiting for initialization...</p>
       </div>
     )
   }
 
   return (
     <div className="omnichain-demo">
-      <h3>🌐 Omnichain Marketplace - Test Suite</h3>
+      <h3 style={{ color: '#000' }}>🌐 Omnichain Marketplace - Test Suite</h3>
 
       <div className="status-section" style={{
         padding: '1rem',
@@ -236,15 +236,15 @@ export default function OmnichainDemo() {
         borderRadius: '8px',
         marginBottom: '1rem'
       }}>
-        <h4>✅ System Status: Ready</h4>
-        <p><strong>Your Address:</strong> {userAddress}</p>
-        <p><strong>Orchestrator:</strong> {orchestrator ? '✅ Created' : '❌ Not created'}</p>
-        <p><strong>MEE Client:</strong> {meeClient ? '✅ Connected' : '❌ Not connected'}</p>
-        <p><strong>Authorizations:</strong> {authorizations ? `✅ Signed (${Object.keys(authorizations).length} chains)` : '❌ Not signed'}</p>
+        <h4 style={{ color: '#000' }}>✅ System Status: Ready</h4>
+        <p style={{ color: '#000' }}><strong>Your Address:</strong> {userAddress}</p>
+        <p style={{ color: '#000' }}><strong>Orchestrator:</strong> {orchestrator ? '✅ Created' : '❌ Not created'}</p>
+        <p style={{ color: '#000' }}><strong>MEE Client:</strong> {meeClient ? '✅ Connected' : '❌ Not connected'}</p>
+        <p style={{ color: '#000' }}><strong>Authorizations:</strong> {authorizations ? `✅ Signed (${Object.keys(authorizations).length} chains)` : '❌ Not signed'}</p>
       </div>
 
       <div className="test-controls" style={{ marginBottom: '1rem' }}>
-        <h4>Test Controls</h4>
+        <h4 style={{ color: '#000' }}>Test Controls</h4>
 
         <button
           onClick={runSimpleTest}
@@ -281,7 +281,7 @@ export default function OmnichainDemo() {
           borderRadius: '8px',
           marginBottom: '1rem'
         }}>
-          <p><strong>Status:</strong> {statusMessage}</p>
+          <p style={{ color: '#000' }}><strong>Status:</strong> {statusMessage}</p>
         </div>
       )}
 
@@ -291,7 +291,7 @@ export default function OmnichainDemo() {
           backgroundColor: '#e8f5e9',
           borderRadius: '8px',
           marginBottom: '1rem',
-          color: '#2e7d32'
+          color: '#000'
         }}>
           <p>{testResult}</p>
         </div>
@@ -303,7 +303,7 @@ export default function OmnichainDemo() {
           backgroundColor: '#ffebee',
           borderRadius: '8px',
           marginBottom: '1rem',
-          color: '#c62828'
+          color: '#000'
         }}>
           <strong>Error:</strong>
           <p>{testError}</p>
