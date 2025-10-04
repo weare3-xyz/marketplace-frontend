@@ -1,0 +1,11 @@
+{
+  "nftContract": "0x788Ae772b4d167C89E1564f31D29eb01a0F2B2aF",
+  "usdcContract": "0x76216f53673B873C5D15fa6F9E5ff5d0D1DC07A2",
+  "marketplaceContract": "0xf1DCeB337C737195560a1228a76ABC5cA73e5EA7",
+  "tokenId": 0,
+  "price": "100",
+  "seller": "0xEa2495FB816bC0e8a1b82D7a449de15C3E67C582",
+  "network": "base-sepolia",
+  "chainId": 84532,
+  "timestamp": "2025-10-04T15:34:23.475Z"
+}

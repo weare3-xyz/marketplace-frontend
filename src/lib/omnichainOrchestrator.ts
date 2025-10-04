@@ -6,7 +6,7 @@
  */
 
 import { http, createWalletClient, custom, type Chain, type Address } from 'viem'
-import { base, optimism, polygon, arbitrum, mainnet } from 'viem/chains'
+import { base, baseSepolia, optimism, polygon, arbitrum, mainnet } from 'viem/chains'
 import {
   toMultichainNexusAccount,
   createMeeClient,
@@ -35,6 +35,7 @@ export const SUPPORTED_CHAINS: Chain[] = [
   polygon, // Polygon Mainnet (chainId: 137)
   arbitrum, // Arbitrum One (chainId: 42161)
   mainnet, // Ethereum Mainnet (chainId: 1)
+  baseSepolia, // Base Sepolia Testnet (chainId: 84532) - FOR TESTING
 ]
 
 /**

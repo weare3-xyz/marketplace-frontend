@@ -76,8 +76,9 @@ export const MARKETPLACE_ADDRESSES: { [chainId: number]: Address } = {
   1: '0x0000000000000000000000000000000000000000', // Ethereum - replace with actual
   10: '0x0000000000000000000000000000000000000000', // Optimism - replace with actual
   137: '0x0000000000000000000000000000000000000000', // Polygon - replace with actual
-  8453: '0x0000000000000000000000000000000000000000', // Base - replace with actual
+  8453: '0x0000000000000000000000000000000000000000', // Base Mainnet - not deployed yet
   42161: '0x0000000000000000000000000000000000000000', // Arbitrum - replace with actual
+  84532: '0xf1DCeB337C737195560a1228a76ABC5cA73e5EA7', // Base Sepolia TESTNET - DEPLOYED ✅
 }
 
 // ============================================================================
