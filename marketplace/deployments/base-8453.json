@@ -1,0 +1,10 @@
+{
+  "network": "base",
+  "chainId": 8453,
+  "contractAddress": "0xf1DCeB337C737195560a1228a76ABC5cA73e5EA7",
+  "feeRecipient": "0xEa2495FB816bC0e8a1b82D7a449de15C3E67C582",
+  "platformFeeBps": 250,
+  "deployer": "0xEa2495FB816bC0e8a1b82D7a449de15C3E67C582",
+  "timestamp": "2025-10-04T15:27:12.476Z",
+  "blockNumber": 31911672
+}

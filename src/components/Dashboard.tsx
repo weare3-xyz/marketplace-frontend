@@ -4,8 +4,10 @@
  * Main marketplace dashboard after onboarding is complete
  */
 
+import { useState } from 'react'
 import { usePrivy } from '@privy-io/react-auth'
 import OmnichainDemo from './OmnichainDemo'
+import Marketplace from './Marketplace'
 // import BiconomyDemo from './BiconomyDemo'
 // import FundWallet from './FundWallet'
 import type { UserProfile } from '../types/onboarding'
@@ -17,6 +19,7 @@ interface DashboardProps {
 export default function Dashboard({ userProfile }: DashboardProps) {
   // const { wallets } = useWallets()
   const { logout } = usePrivy()
+  const [showMarketplace, setShowMarketplace] = useState(false)
   //  const embeddedWallet = wallets.find((w) => w.walletClientType === 'privy')
 
   const getRoleIcon = (role: string): string => {
@@ -87,6 +90,14 @@ export default function Dashboard({ userProfile }: DashboardProps) {
           </div>
 
           <div className="quick-actions">
+            <button
+              className="action-button"
+              onClick={() => setShowMarketplace(!showMarketplace)}
+              style={{ marginRight: '0.5rem' }}
+            >
+              <span>🛒</span>
+              <span>{showMarketplace ? 'Hide' : 'Open'} Marketplace</span>
+            </button>
             <button className="action-button" onClick={logout}>
               <span>🚪</span>
               <span>Logout</span>
@@ -97,12 +108,21 @@ export default function Dashboard({ userProfile }: DashboardProps) {
 
       {/* Main Content */}
       <div className="dashboard-content">
-        {/* Omnichain Marketplace - Main Feature */}
-        <div className="dashboard-section">
-          <div className="section-content">
-            <OmnichainDemo />
+        {/* Marketplace Listings */}
+        {showMarketplace ? (
+          <div className="dashboard-section">
+            <div className="section-content">
+              <Marketplace />
+            </div>
           </div>
-        </div>
+        ) : (
+          /* Omnichain Demo - Testing */
+          <div className="dashboard-section">
+            <div className="section-content">
+              <OmnichainDemo />
+            </div>
+          </div>
+        )}
 
         {/* Original Demo - Hidden by default */}
         {/* <details className="dashboard-section">
