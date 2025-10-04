@@ -7,10 +7,10 @@
 
 import { useState } from 'react'
 import { useWallets } from '@privy-io/react-auth'
-import { base, optimism } from 'viem/chains'
-import { parseUnits, erc20Abi, encodeFunctionData } from 'viem'
+import { base } from 'viem/chains'
+// import { parseUnits, erc20Abi, encodeFunctionData } from 'viem'
 import { useOmnichainMarketplace, useTransactionStatusMessage } from '../hooks/useOmnichainMarketplace'
-import { getUSDCAddress } from '../lib/crossChainBridge'
+// import { getUSDCAddress } from '../lib/crossChainBridge'
 import type { Instruction } from '../types/omnichain'
 
 export default function OmnichainDemo() {
@@ -87,102 +87,102 @@ export default function OmnichainDemo() {
   }
 
   // Test 2: Cross-chain USDC transfer (Optimism -> Base)
-  const runCrossChainTest = async () => {
-    if (!orchestrator || !meeClient || !authorizations) {
-      setTestError('Not initialized')
-      return
-    }
+  // const runCrossChainTest = async () => {
+  //   if (!orchestrator || !meeClient || !authorizations) {
+  //     setTestError('Not initialized')
+  //     return
+  //   }
 
-    setTestLoading(true)
-    setTestError('')
-    setTestResult('')
+  //   setTestLoading(true)
+  //   setTestError('')
+  //   setTestResult('')
 
-    try {
-      console.log('🧪 Running cross-chain USDC transfer test (Optimism → Base)...')
+  //   try {
+  //     console.log('🧪 Running cross-chain USDC transfer test (Optimism → Base)...')
 
-      const usdcOptimism = getUSDCAddress(optimism.id)!
-      const usdcBase = getUSDCAddress(base.id)!
-      const amount = parseUnits('0.1', 6) // 0.1 USDC
+  //     const usdcOptimism = getUSDCAddress(optimism.id)!
+  //     const usdcBase = getUSDCAddress(base.id)!
+  //     const amount = parseUnits('0.1', 6) // 0.1 USDC
 
-      // Instruction 1: Transfer 0.1 USDC to yourself on Optimism (to test it works)
-      const transferOnOptimism: Instruction = {
-        chainId: optimism.id,
-        calls: [{
-          to: usdcOptimism,
-          value: 0n,
-          data: encodeFunctionData({
-            abi: erc20Abi,
-            functionName: 'transfer',
-            args: [userAddress!, amount],
-          }),
-        }],
-      }
+  //     // Instruction 1: Transfer 0.1 USDC to yourself on Optimism (to test it works)
+  //     const transferOnOptimism: Instruction = {
+  //       chainId: optimism.id,
+  //       calls: [{
+  //         to: usdcOptimism,
+  //         value: 0n,
+  //         data: encodeFunctionData({
+  //           abi: erc20Abi,
+  //           functionName: 'transfer',
+  //           args: [userAddress!, amount],
+  //         }),
+  //       }],
+  //     }
 
-      // Instruction 2: Transfer 0.1 USDC to yourself on Base
-      const transferOnBase: Instruction = {
-        chainId: base.id,
-        calls: [{
-          to: usdcBase,
-          value: 0n,
-          data: encodeFunctionData({
-            abi: erc20Abi,
-            functionName: 'transfer',
-            args: [userAddress!, amount],
-          }),
-        }],
-      }
+  //     // Instruction 2: Transfer 0.1 USDC to yourself on Base
+  //     const transferOnBase: Instruction = {
+  //       chainId: base.id,
+  //       calls: [{
+  //         to: usdcBase,
+  //         value: 0n,
+  //         data: encodeFunctionData({
+  //           abi: erc20Abi,
+  //           functionName: 'transfer',
+  //           args: [userAddress!, amount],
+  //         }),
+  //       }],
+  //     }
 
-      console.log('Getting quote for multi-chain transaction...')
-      const quote = await meeClient.getQuote({
-        instructions: [transferOnOptimism, transferOnBase],
-        delegate: true,
-        authorizations: Object.values(authorizations),
-        sponsorship: true, // Gasless - sponsored by platform
-      })
+  //     console.log('Getting quote for multi-chain transaction...')
+  //     const quote = await meeClient.getQuote({
+  //       instructions: [transferOnOptimism, transferOnBase],
+  //       delegate: true,
+  //       authorizations: Object.values(authorizations),
+  //       sponsorship: true, // Gasless - sponsored by platform
+  //     })
 
-      console.log('Executing multi-chain transaction...')
-      const { hash } = await meeClient.executeQuote({ quote })
+  //     console.log('Executing multi-chain transaction...')
+  //     const { hash } = await meeClient.executeQuote({ quote })
 
-      console.log('Waiting for confirmation...')
-      await meeClient.waitForSupertransactionReceipt({ hash })
+  //     console.log('Waiting for confirmation...')
+  //     await meeClient.waitForSupertransactionReceipt({ hash })
 
-      const meeScanLink = `https://meescan.biconomy.io/details/${hash}`
-      setTestResult(`✅ Success! Multi-chain tx: ${hash}`)
-      console.log('✅ Cross-chain test passed! View:', meeScanLink)
+  //     const meeScanLink = `https://meescan.biconomy.io/details/${hash}`
+  //     setTestResult(`✅ Success! Multi-chain tx: ${hash}`)
+  //     console.log('✅ Cross-chain test passed! View:', meeScanLink)
 
-      window.open(meeScanLink, '_blank')
-    } catch (err) {
-      console.error('Cross-chain test failed:', err)
-      setTestError(err instanceof Error ? err.message : 'Cross-chain test failed')
-    } finally {
-      setTestLoading(false)
-    }
-  }
+  //     window.open(meeScanLink, '_blank')
+  //   } catch (err) {
+  //     console.error('Cross-chain test failed:', err)
+  //     setTestError(err instanceof Error ? err.message : 'Cross-chain test failed')
+  //   } finally {
+  //     setTestLoading(false)
+  //   }
+  // }
 
-  // Test 3: Check if user's address is same on all chains
-  const checkAddresses = () => {
-    if (!orchestrator || !userAddress) return
+  // // Test 3: Check if user's address is same on all chains
+  // const checkAddresses = () => {
+  //   if (!orchestrator || !userAddress) return
 
-    console.log('🔍 Checking addresses across chains...')
-    const chains = [
-      { name: 'Base', id: 8453 },
-      { name: 'Optimism', id: 10 },
-      { name: 'Polygon', id: 137 },
-      { name: 'Arbitrum', id: 42161 },
-      { name: 'Ethereum', id: 1 },
-    ]
+  //   console.log('🔍 Checking addresses across chains...')
+  //   const chains = [
+  //     { name: 'Base', id: 8453 },
+  //     { name: 'Optimism', id: 10 },
+  //     { name: 'Polygon', id: 137 },
+  //     { name: 'Arbitrum', id: 42161 },
+  //     { name: 'Ethereum', id: 1 },
+  //   ]
 
-    chains.forEach((chain) => {
-      const address = orchestrator.addressOn(chain.id, true)
-      console.log(`${chain.name}: ${address}`)
+  //   chains.forEach((chain) => {
+  //     const address = orchestrator.addressOn(chain.id, true)
+  //     console.log(`${chain.name}: ${address}`)
 
-      if (address.toLowerCase() !== userAddress.toLowerCase()) {
-        console.warn(`⚠️ Address mismatch on ${chain.name}!`)
-      }
-    })
+  //     if (address.toLowerCase() !== userAddress.toLowerCase()) {
+  //       console.warn(`⚠️ Address mismatch on ${chain.name}!`)
+  //     }
+  //   })
 
-    setTestResult('✅ All addresses match! Check console for details.')
-  }
+  //   setTestResult('✅ All addresses match! Check console for details.')
+  // }
 
   if (!wallet) {
     return (
