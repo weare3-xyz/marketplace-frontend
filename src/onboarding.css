@@ -8,7 +8,8 @@
 
 .onboarding-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  width: 100%;
+  background: white;
   padding: 2rem;
 }
 
@@ -655,8 +656,9 @@
    ============================================================================ */
 
 .dashboard-wrapper {
+  width: 100%;
   min-height: 100vh;
-  background: #f3f4f6;
+  background: white;
 }
 
 .top-bar {
@@ -675,8 +677,8 @@
 }
 
 .dashboard-container {
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   padding: 2rem;
 }
 
@@ -800,75 +802,26 @@
    ============================================================================ */
 
 .login-container {
+  width: 100%;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: white;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   padding: 2rem;
+  gap: 2rem;
 }
 
-.login-header {
-  text-align: center;
-  color: white;
-  margin-bottom: 2rem;
-}
-
-.login-header h1 {
-  font-size: 3rem;
-  margin-bottom: 0.5rem;
-}
-
-.tagline {
-  font-size: 1.2rem;
-  opacity: 0.9;
-}
-
-.login-card {
-  background: white;
-  border-radius: 16px;
-  padding: 3rem;
-  max-width: 450px;
-  width: 100%;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-}
-
-.login-card h2 {
-  text-align: center;
-  margin-bottom: 0.5rem;
+.login-container h1 {
+  font-size: 2.5rem;
   color: #1f2937;
-}
-
-.login-card > p {
-  text-align: center;
-  color: #6b7280;
-  margin-bottom: 2rem;
+  margin: 0;
 }
 
 .login-button {
-  width: 100%;
-  padding: 1rem;
+  padding: 1rem 3rem;
   font-size: 1.1rem;
-  margin-bottom: 2rem;
-}
-
-.login-features {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.feature {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  color: #6b7280;
-  font-size: 0.95rem;
-}
-
-.feature span:first-child {
-  font-size: 1.2rem;
 }
 
 /* ============================================================================
@@ -877,13 +830,14 @@
 
 .loading-container,
 .error-container {
+  width: 100%;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: white;
+  color: #1f2937;
 }
 
 .loading-spinner {

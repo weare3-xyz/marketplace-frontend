@@ -50,41 +50,6 @@ export default function FundingStep({
         )}
 
         <FundWallet walletAddress={walletAddress} />
-
-        <div className="funding-benefits">
-          <h3>What you can do after funding:</h3>
-          <div className="benefits-grid">
-            <div className="benefit-item">
-              <span className="benefit-icon">🛒</span>
-              <h4>Buy NFTs</h4>
-              <p>Purchase digital art from artists worldwide</p>
-            </div>
-            <div className="benefit-item">
-              <span className="benefit-icon">🔄</span>
-              <h4>Trade Instantly</h4>
-              <p>Buy and sell across multiple chains seamlessly</p>
-            </div>
-            <div className="benefit-item">
-              <span className="benefit-icon">⚡</span>
-              <h4>Zero Gas Fees</h4>
-              <p>All transactions are gasless - you only pay for the NFT</p>
-            </div>
-            <div className="benefit-item">
-              <span className="benefit-icon">🌍</span>
-              <h4>Multi-Chain</h4>
-              <p>Access NFTs on Base, Optimism, Polygon, and more</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="funding-skip-option">
-          <div className="skip-card">
-            <h4>Not ready to fund yet?</h4>
-            <p>
-              No problem! You can explore the marketplace and fund your wallet anytime from your profile.
-            </p>
-          </div>
-        </div>
       </div>
 
       <div className="onboarding-actions">
@@ -108,12 +73,6 @@ export default function FundingStep({
             I've Funded My Wallet
           </button>
         </div>
-      </div>
-
-      <div className="onboarding-footer">
-        <p style={{ fontSize: '0.85rem', color: '#666' }}>
-          💡 Tip: We recommend starting with $50-100 USDC for your first purchases
-        </p>
       </div>
     </div>
   )

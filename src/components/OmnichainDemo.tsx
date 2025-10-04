@@ -255,7 +255,7 @@ export default function OmnichainDemo() {
           {testLoading ? 'Running...' : '1️⃣ Test Simple Transfer (Base)'}
         </button>
 
-        <button
+        {/* <button
           onClick={runCrossChainTest}
           disabled={testLoading}
           className="primary-button"
@@ -271,7 +271,7 @@ export default function OmnichainDemo() {
           style={{ marginBottom: '0.5rem' }}
         >
           3️⃣ Check Addresses (All Chains)
-        </button>
+        </button> */}
       </div>
 
       {txStatus !== 'idle' && (

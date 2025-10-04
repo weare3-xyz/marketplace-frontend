@@ -53,33 +53,10 @@ function App() {
       {!authenticated ? (
         // Login Screen
         <div className="login-container">
-          <header className="login-header">
-            <h1>🌐 Omnichain Marketplace</h1>
-            <p className="tagline">Create, collect, and curate digital art across multiple blockchains</p>
-          </header>
-
-          <div className="login-card">
-            <h2>Welcome!</h2>
-            <p>Connect your wallet to get started</p>
-            <button onClick={login} className="primary-button login-button">
-              Login with Privy
-            </button>
-
-            <div className="login-features">
-              <div className="feature">
-                <span>✅</span>
-                <span>Gasless transactions</span>
-              </div>
-              <div className="feature">
-                <span>🌍</span>
-                <span>Multi-chain support</span>
-              </div>
-              <div className="feature">
-                <span>💳</span>
-                <span>Buy crypto with card</span>
-              </div>
-            </div>
-          </div>
+          <h1>Omnichain Marketplace</h1>
+          <button onClick={login} className="primary-button login-button">
+            Login
+          </button>
         </div>
       ) : isLoadingProfile ? (
         // Loading Profile

@@ -4,7 +4,7 @@
  * Main marketplace dashboard after onboarding is complete
  */
 
-import { useWallets } from '@privy-io/react-auth'
+import { useWallets, usePrivy } from '@privy-io/react-auth'
 import OmnichainDemo from './OmnichainDemo'
 // import BiconomyDemo from './BiconomyDemo'
 import FundWallet from './FundWallet'
@@ -16,6 +16,7 @@ interface DashboardProps {
 
 export default function Dashboard({ userProfile }: DashboardProps) {
   const { wallets } = useWallets()
+  const { logout } = usePrivy()
   const embeddedWallet = wallets.find((w) => w.walletClientType === 'privy')
 
   const getRoleIcon = (role: string): string => {
@@ -59,9 +60,9 @@ export default function Dashboard({ userProfile }: DashboardProps) {
               <span>🖼️</span>
               <span>My NFTs</span>
             </button>
-            <button className="action-button">
-              <span>⚙️</span>
-              <span>Settings</span>
+            <button className="action-button" onClick={logout}>
+              <span>🚪</span>
+              <span>Logout</span>
             </button>
           </div>
         </div>
