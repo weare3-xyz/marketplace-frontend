@@ -23,7 +23,7 @@ Complete implementation of Privy embedded wallets with Biconomy's Modular Execut
 This app is a **complete omnichain NFT marketplace** with **seamless user onboarding**:
 
 ✅ **Role-based onboarding** (Artist/Collector/Curator)
-✅ **Username setup** with availability checking
+✅ **Username & profile picture** with IPFS storage
 ✅ **Multi-chain wallet** (same address on all chains)
 ✅ **Buy crypto with card/Apple Pay/Google Pay**
 ✅ **Gasless transactions** - zero gas fees for users
@@ -44,7 +44,10 @@ Users choose their marketplace role:
 - 💎 **Collector** - Discover and collect NFTs
 - ⭐ **Curator** - Curate and showcase collections
 
-### Step 2: Username Setup
+### Step 2: Username & Profile Picture Setup
+- Upload profile picture (optional) - stored on IPFS via Pinata
+- Image preview with circular crop
+- Supports JPEG, PNG, GIF, WebP (max 5MB)
 - Set unique username (3-20 characters)
 - Real-time availability checking
 - Username validation
@@ -82,7 +85,8 @@ Role-specific dashboard with:
 - **Smart Accounts:** Biconomy Nexus v1.2.0
 - **Execution:** Biconomy MEE (Modular Execution Environment)
 - **Standard:** EIP-7702 (EOA delegation)
-- **Chains:** Base, Optimism (configurable)
+- **Storage:** Pinata (IPFS for profile images)
+- **Chains:** Base, Optimism, Polygon, Arbitrum, Ethereum
 
 ---
 
@@ -199,6 +203,7 @@ Biconomy's off-chain infrastructure that:
 - Node.js 18+
 - Privy App ID
 - Biconomy MEE API Key
+- Pinata Account (for profile images)
 
 ### 1. Install Dependencies
 
@@ -217,10 +222,15 @@ VITE_PRIVY_APP_ID=your-privy-app-id-here
 
 # Biconomy MEE API Key
 VITE_BICONOMY_MEE_API_KEY=mee_your_api_key_here
+
+# Pinata IPFS Storage (for profile images)
+# Note: Currently only JWT is required for uploads
+VITE_PINATA_JWT=your_pinata_jwt_here
 ```
 
 **Get Privy App ID:** https://dashboard.privy.io
 **Get Biconomy API Key:** https://dashboard.biconomy.io
+**Get Pinata JWT:** https://app.pinata.cloud → API Keys → Create JWT
 
 ### 3. Enable Sponsorship (Optional but Recommended)
 
@@ -687,7 +697,8 @@ privy-biconomy-app/
 │   │   ├── omnichainOrchestrator.ts     # Multi-chain account setup
 │   │   ├── omnichainAuthorizations.ts   # EIP-7702 auth management
 │   │   ├── nftMarketplace.ts            # NFT listing/buying functions
-│   │   └── crossChainBridge.ts          # Token bridging logic
+│   │   ├── crossChainBridge.ts          # Token bridging logic
+│   │   └── pinata.ts                    # IPFS image upload via Pinata
 │   ├── types/
 │   │   ├── onboarding.ts                # Onboarding & user profile types
 │   │   └── omnichain.ts                 # Marketplace types
@@ -708,19 +719,21 @@ privy-biconomy-app/
 **Onboarding Components:**
 - `OnboardingFlow.tsx` - Manages 4-step onboarding process
 - `RoleSelection.tsx` - Artist/Collector/Curator selection
-- `UsernameSetup.tsx` - Username with validation
+- `UsernameSetup.tsx` - Username & profile picture upload with IPFS
 - `WalletAddressDisplay.tsx` - Shows addresses on 5 chains
 - `FundingStep.tsx` - Optional funding with Skip button
 
 **Dashboard:**
-- `Dashboard.tsx` - Role-based dashboard with all features
-- Shows OmnichainDemo, FundWallet, BiconomyDemo
+- `Dashboard.tsx` - Role-based dashboard with profile picture display
+- Shows user profile with IPFS-hosted avatar
+- Displays OmnichainDemo marketplace features
 
 **Core Logic:**
 - `useOmnichainMarketplace.ts` - Main hook for marketplace operations
 - `omnichainOrchestrator.ts` - Creates multichain Nexus account
 - `omnichainAuthorizations.ts` - EIP-7702 authorization signing
 - `nftMarketplace.ts` - NFT listing/buying functions
+- `pinata.ts` - IPFS image upload and validation
 
 **State Management:**
 - User profile stored in `localStorage` under `'user_profile'`

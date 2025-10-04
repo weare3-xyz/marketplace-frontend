@@ -4,8 +4,6 @@
  * Handles uploading profile images to Pinata IPFS
  */
 
-const PINATA_API_KEY = import.meta.env.VITE_PINATA_API_KEY
-const PINATA_SECRET_KEY = import.meta.env.VITE_PINATA_SECRET_KEY
 const PINATA_JWT = import.meta.env.VITE_PINATA_JWT
 
 /**
