@@ -6,8 +6,6 @@
 
 import { usePrivy } from '@privy-io/react-auth'
 import OmnichainDemo from './OmnichainDemo'
-// import BiconomyDemo from './BiconomyDemo'
-// import FundWallet from './FundWallet'
 import type { UserProfile } from '../types/onboarding'
 
 interface DashboardProps {
@@ -15,9 +13,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ userProfile }: DashboardProps) {
-  // const { wallets } = useWallets()
   const { logout } = usePrivy()
-  //  const embeddedWallet = wallets.find((w) => w.walletClientType === 'privy')
 
   const getRoleIcon = (role: string): string => {
     const icons: Record<string, string> = {
@@ -103,59 +99,6 @@ export default function Dashboard({ userProfile }: DashboardProps) {
             <OmnichainDemo />
           </div>
         </div>
-
-        {/* Original Demo - Hidden by default */}
-        {/* <details className="dashboard-section">
-          <summary className="section-header">
-            <h2>🔧 Advanced: Biconomy Demo</h2>
-          </summary>
-          <div className="section-content">
-            {embeddedWallet && <BiconomyDemo wallet={embeddedWallet} />}
-          </div>
-        </details> */}
-
-        {/* Role-Specific Sections */}
-        {/* {userProfile.role === 'artist' && (
-          <div className="dashboard-section role-specific artist-section">
-            <div className="section-header">
-              <h2>🎨 Artist Tools</h2>
-            </div>
-            <div className="section-content">
-              <div className="placeholder-content">
-                <p>Create and manage your NFT collections</p>
-                <button className="primary-button">Create NFT</button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {userProfile.role === 'collector' && (
-          <div className="dashboard-section role-specific collector-section">
-            <div className="section-header">
-              <h2>💎 My Collection</h2>
-            </div>
-            <div className="section-content">
-              <div className="placeholder-content">
-                <p>View and manage your NFT portfolio</p>
-                <button className="primary-button">Browse Marketplace</button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {userProfile.role === 'curator' && (
-          <div className="dashboard-section role-specific curator-section">
-            <div className="section-header">
-              <h2>⭐ Curation Dashboard</h2>
-            </div>
-            <div className="section-content">
-              <div className="placeholder-content">
-                <p>Create and manage curated collections</p>
-                <button className="primary-button">New Collection</button>
-              </div>
-            </div>
-          </div>
-        )} */}
       </div>
 
       {/* Dashboard Footer */}
