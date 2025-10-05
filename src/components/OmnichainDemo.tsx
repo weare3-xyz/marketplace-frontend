@@ -12,6 +12,7 @@ import { base } from 'viem/chains'
 import { useOmnichainMarketplace, useTransactionStatusMessage } from '../hooks/useOmnichainMarketplace'
 // import { getUSDCAddress } from '../lib/crossChainBridge'
 import type { Instruction } from '../types/omnichain'
+import CrossChainUSDTTest from './CrossChainUSDTTest'
 
 export default function OmnichainDemo() {
   const { wallets } = useWallets()
@@ -309,6 +310,9 @@ export default function OmnichainDemo() {
           <p>{testError}</p>
         </div>
       )}
+
+      {/* Cross-Chain USDT Transfer Test */}
+      <CrossChainUSDTTest />
 
     </div>
   )
