@@ -5,6 +5,7 @@ Complete implementation of Privy embedded wallets with Biconomy's Modular Execut
 ## 📋 Table of Contents
 
 - [What This Does](#what-this-does)
+- [🧪 Testnet Support (NEW!)](#-testnet-support-new)
 - [User Onboarding Flow](#user-onboarding-flow)
 - [Tech Stack](#tech-stack)
 - [Architecture Overview](#architecture-overview)
@@ -31,6 +32,41 @@ This app is a **complete omnichain NFT marketplace** with **seamless user onboar
 ✅ **EIP-7702 smart accounts** on existing EOAs
 
 **Perfect for:** Complete Web2-to-Web3 onboarding, NFT marketplace, cross-chain DeFi
+
+---
+
+## 🧪 Testnet Support (NEW!)
+
+**Test your marketplace with FREE gasless transactions!**
+
+✅ **5 Testnet Chains:** Base Sepolia, Optimism Sepolia, Polygon Amoy, Arbitrum Sepolia, Ethereum Sepolia
+✅ **100% Free Gas:** Uses Biconomy's free testnet gas tank (no API key needed)
+✅ **Easy Toggle:** Switch between testnet/mainnet with one environment variable
+
+### Quick Start (Testnet)
+
+```env
+# .env
+VITE_NETWORK_MODE=testnet  # For free testnet testing
+```
+
+```bash
+npm run dev
+```
+
+That's it! Your app now runs on testnets with completely free gasless transactions.
+
+**📖 Complete Guide:** See [TESTNET_SETUP.md](./TESTNET_SETUP.md) for full testnet documentation.
+
+### Switch to Mainnet (Production)
+
+```env
+# .env
+VITE_NETWORK_MODE=mainnet  # For production
+VITE_BICONOMY_MEE_API_KEY=mee_your_mainnet_key  # Required for mainnet
+```
+
+**📖 Setup Guide:** See [TESTNET_ENABLED.md](./TESTNET_ENABLED.md) for implementation details.
 
 ---
 

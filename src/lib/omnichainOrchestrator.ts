@@ -6,7 +6,19 @@
  */
 
 import { http, createWalletClient, custom, type Chain, type Address } from 'viem'
-import { base, optimism, polygon, arbitrum, mainnet } from 'viem/chains'
+import {
+  base,
+  baseSepolia,
+  // Future: Add more chains as MEE adds support
+  // optimism,
+  // polygon,
+  // arbitrum,
+  // mainnet,
+  // optimismSepolia,
+  // polygonAmoy,
+  // arbitrumSepolia,
+  // sepolia
+} from 'viem/chains'
 import {
   toMultichainNexusAccount,
   createMeeClient,
@@ -27,18 +39,44 @@ import type { MultichainNexusAccount, MEEClient } from '../types/omnichain'
 export const NEXUS_IMPLEMENTATION = '0x000000004F43C49e93C970E84001853a70923B03'
 
 /**
- * All supported chains for the omnichain NFT marketplace
+ * Network mode from environment
  */
-export const SUPPORTED_CHAINS: Chain[] = [
-  base, // Base Mainnet (chainId: 8453)
-  optimism, // Optimism Mainnet (chainId: 10)
-  polygon, // Polygon Mainnet (chainId: 137)
-  arbitrum, // Arbitrum One (chainId: 42161)
-  mainnet, // Ethereum Mainnet (chainId: 1)
+export const NETWORK_MODE = (import.meta.env.VITE_NETWORK_MODE || 'testnet') as 'testnet' | 'mainnet'
+
+/**
+ * Testnet chains for development
+ * NOTE: MEE only supports Base Sepolia (84532) for testnet sponsorship
+ * Other testnet chains are not supported by the MEE node
+ */
+export const TESTNET_CHAINS: Chain[] = [
+  baseSepolia,      // Base Sepolia (chainId: 84532) - ✅ MEE Supported
+  // optimismSepolia,  // ❌ Not supported by MEE
+  // polygonAmoy,      // ❌ Not supported by MEE
+  // arbitrumSepolia,  // ❌ Not supported by MEE
+  // sepolia,          // ❌ Not supported by MEE
 ]
 
 /**
- * Chain IDs for easy reference
+ * Mainnet chains for production
+ * NOTE: MEE supports many mainnet chains, but currently only Base is configured
+ * Add more chains as needed from: https://network.biconomy.io/v1/sponsorship/info
+ */
+export const MAINNET_CHAINS: Chain[] = [
+  base,      // Base Mainnet (chainId: 8453) - ✅ MEE Supported
+  // optimism,  // Optimism Mainnet (chainId: 10) - Check MEE support
+  // polygon,   // Polygon Mainnet (chainId: 137) - Check MEE support
+  // arbitrum,  // Arbitrum One (chainId: 42161) - Check MEE support
+  // mainnet,   // Ethereum Mainnet (chainId: 1) - Check MEE support
+]
+
+/**
+ * All supported chains for the omnichain NFT marketplace
+ * Automatically switches based on VITE_NETWORK_MODE
+ */
+export const SUPPORTED_CHAINS: Chain[] = NETWORK_MODE === 'testnet' ? TESTNET_CHAINS : MAINNET_CHAINS
+
+/**
+ * Chain IDs for easy reference (Mainnet)
  */
 export const CHAIN_IDS = {
   BASE: 8453,
@@ -47,6 +85,31 @@ export const CHAIN_IDS = {
   ARBITRUM: 42161,
   ETHEREUM: 1,
 } as const
+
+/**
+ * Testnet chain IDs for easy reference
+ */
+export const TESTNET_CHAIN_IDS = {
+  BASE_SEPOLIA: 84532,
+  OPTIMISM_SEPOLIA: 11155420,
+  POLYGON_AMOY: 80002,
+  ARBITRUM_SEPOLIA: 421614,
+  SEPOLIA: 11155111,
+} as const
+
+/**
+ * Biconomy testnet sponsorship configuration
+ * As per: https://docs.biconomy.io/new/getting-started/sponsor-gas-for-users#testnet-setup
+ * Retrieved from: https://network.biconomy.io/v1/sponsorship/info
+ */
+export const TESTNET_SPONSORSHIP_CONFIG = {
+  url: 'https://network.biconomy.io',
+  gasTank: {
+    address: '0x18eAc826f3dD77d065E75E285d3456B751AC80d5' as Address, // Official MEE testnet gas tank
+    token: '0x036cbd53842c5426634e7929541ec2318f3dcf7e' as Address,    // Testnet USDC on Base Sepolia
+    chainId: TESTNET_CHAIN_IDS.BASE_SEPOLIA, // 84532
+  }
+}
 
 // ============================================================================
 // Orchestrator Creation
@@ -101,7 +164,7 @@ export async function createOmnichainOrchestrator(
       chainConfigurations: SUPPORTED_CHAINS.map((chain) => ({
         chain,
         transport: http(), // Public RPC (or use custom RPC URLs)
-        version: getMEEVersion(MEEVersion.V2_1_0), // MEE v2.1.0 with EIP-7702 support
+        version: getMEEVersion(MEEVersion.V2_2_0), // MEE v2.2.0 with testnet support
       })),
       signer: walletClient,
       // IMPORTANT: Setting accountAddress enables EIP-7702 mode
@@ -135,9 +198,10 @@ export async function createOmnichainOrchestrator(
  * - Connects to Biconomy's MEE relayer network
  * - Enables quote generation, transaction execution, and receipt tracking
  * - Handles gas sponsorship and cross-chain orchestration
+ * - Automatically configures testnet sponsorship when in testnet mode
  *
  * @param orchestrator - Multichain Nexus account from createOmnichainOrchestrator
- * @param apiKey - Optional Biconomy MEE API key (required for sponsorship)
+ * @param apiKey - Optional Biconomy MEE API key (required for mainnet sponsorship)
  * @returns MEE client for transaction execution
  *
  * @example
@@ -147,7 +211,7 @@ export async function createOmnichainOrchestrator(
  *   instructions: [...],
  *   delegate: true,
  *   authorizations: [auth],
- *   sponsorship: true
+ *   sponsorship: true  // Works on both testnet and mainnet
  * })
  * ```
  */
@@ -156,14 +220,28 @@ export async function createOmnichainMEEClient(
   apiKey?: string
 ): Promise<MEEClient> {
   try {
-    const meeClient = await createMeeClient({
+    const clientConfig: any = {
       account: orchestrator as any,
-      // API key enables gas sponsorship (optional)
-      // Without API key, users must pay gas with tokens
-      ...(apiKey && { apiKey }),
-    })
+    }
 
-    console.log('✅ MEE client created', apiKey ? '(with API key for sponsorship)' : '(no API key)')
+    // Mainnet: Requires API key for hosted sponsorship
+    if (NETWORK_MODE === 'mainnet') {
+      if (apiKey) {
+        clientConfig.apiKey = apiKey
+        console.log('✅ MEE client created for MAINNET (with API key for hosted sponsorship)')
+      } else {
+        console.log('⚠️ MEE client created for MAINNET (no API key - users will pay gas)')
+      }
+    }
+
+    // Testnet: Uses Biconomy's free testnet gas tank
+    else {
+      // No API key needed for testnet - Biconomy provides free testnet sponsorship
+      console.log('✅ MEE client created for TESTNET (using free Biconomy testnet gas tank)')
+      console.log('📍 Testnet chains:', TESTNET_CHAINS.map(c => c.name).join(', '))
+    }
+
+    const meeClient = await createMeeClient(clientConfig)
 
     return meeClient as unknown as MEEClient
   } catch (error) {
@@ -199,6 +277,27 @@ export function isChainSupported(chainId: number): boolean {
  */
 export function getMEEScanLink(hash: string): string {
   return `https://meescan.biconomy.io/details/${hash}`
+}
+
+/**
+ * Get current network mode
+ */
+export function getNetworkMode(): 'testnet' | 'mainnet' {
+  return NETWORK_MODE
+}
+
+/**
+ * Check if currently on testnet
+ */
+export function isTestnet(): boolean {
+  return NETWORK_MODE === 'testnet'
+}
+
+/**
+ * Check if currently on mainnet
+ */
+export function isMainnet(): boolean {
+  return NETWORK_MODE === 'mainnet'
 }
 
 /**

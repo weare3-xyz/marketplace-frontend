@@ -7,9 +7,10 @@
 
 import { useState } from 'react'
 import { useWallets } from '@privy-io/react-auth'
-import { base } from 'viem/chains'
+import { base, baseSepolia } from 'viem/chains'
 // import { parseUnits, erc20Abi, encodeFunctionData } from 'viem'
 import { useOmnichainMarketplace, useTransactionStatusMessage } from '../hooks/useOmnichainMarketplace'
+import { getNetworkMode, SUPPORTED_CHAINS } from '../lib/omnichainOrchestrator'
 // import { getUSDCAddress } from '../lib/crossChainBridge'
 import type { Instruction } from '../types/omnichain'
 import CrossChainUSDTTest from './CrossChainUSDTTest'
@@ -35,7 +36,10 @@ export default function OmnichainDemo() {
   const [testResult, setTestResult] = useState<string>('')
   const [testError, setTestError] = useState<string>('')
 
-  // Test 1: Simple self-transfer on Base (like your existing BiconomyDemo)
+  const networkMode = getNetworkMode()
+  const currentChain = networkMode === 'testnet' ? baseSepolia : base
+
+  // Test 1: Simple self-transfer on Base (or Base Sepolia for testnet)
   const runSimpleTest = async () => {
     if (!orchestrator || !meeClient || !authorizations) {
       setTestError('Not initialized')
@@ -47,11 +51,11 @@ export default function OmnichainDemo() {
     setTestResult('')
 
     try {
-      console.log('🧪 Running simple self-transfer test on Base...')
+      console.log(`🧪 Running simple self-transfer test on ${currentChain.name}...`)
 
       // Simple instruction: send 0 ETH to yourself
       const instruction: Instruction = {
-        chainId: base.id,
+        chainId: currentChain.id,
         calls: [{
           to: userAddress!,
           value: 0n,
@@ -231,6 +235,25 @@ export default function OmnichainDemo() {
     <div className="omnichain-demo">
       <h3 style={{ color: '#000' }}>🌐 Omnichain Marketplace - Test Suite</h3>
 
+      {/* Network Mode Indicator */}
+      <div style={{
+        padding: '0.75rem 1rem',
+        backgroundColor: networkMode === 'testnet' ? '#fff3e0' : '#e8f5e9',
+        borderRadius: '8px',
+        marginBottom: '1rem',
+        border: `2px solid ${networkMode === 'testnet' ? '#ff9800' : '#4caf50'}`
+      }}>
+        <p style={{ color: '#000', margin: 0, fontWeight: 'bold' }}>
+          {networkMode === 'testnet' ? '🧪 TESTNET MODE' : '🌍 MAINNET MODE'}
+        </p>
+        <p style={{ color: '#666', margin: '0.25rem 0 0 0', fontSize: '0.9rem' }}>
+          {networkMode === 'testnet'
+            ? '✅ Using Biconomy free testnet gas tank (no API key needed)'
+            : '💰 Using your hosted gas sponsorship (API key required)'
+          }
+        </p>
+      </div>
+
       <div className="status-section" style={{
         padding: '1rem',
         backgroundColor: '#e8f5e9',
@@ -239,6 +262,7 @@ export default function OmnichainDemo() {
       }}>
         <h4 style={{ color: '#000' }}>✅ System Status: Ready</h4>
         <p style={{ color: '#000' }}><strong>Your Address:</strong> {userAddress}</p>
+        <p style={{ color: '#000' }}><strong>Active Chains:</strong> {SUPPORTED_CHAINS.map(c => c.name).join(', ')}</p>
         <p style={{ color: '#000' }}><strong>Orchestrator:</strong> {orchestrator ? '✅ Created' : '❌ Not created'}</p>
         <p style={{ color: '#000' }}><strong>MEE Client:</strong> {meeClient ? '✅ Connected' : '❌ Not connected'}</p>
         <p style={{ color: '#000' }}><strong>Authorizations:</strong> {authorizations ? `✅ Signed (${Object.keys(authorizations).length} chains)` : '❌ Not signed'}</p>
@@ -253,7 +277,7 @@ export default function OmnichainDemo() {
           className="primary-button"
           style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
         >
-          {testLoading ? 'Running...' : '1️⃣ Test Simple Transfer (Base)'}
+          {testLoading ? 'Running...' : `1️⃣ Test Simple Transfer (${currentChain.name})`}
         </button>
 
         {/* <button
