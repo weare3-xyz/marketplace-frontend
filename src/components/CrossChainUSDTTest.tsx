@@ -11,10 +11,6 @@ import { polygon, base } from 'viem/chains'
 import { parseUnits, createPublicClient, http, formatUnits } from 'viem'
 import { useOmnichainMarketplace } from '../hooks/useOmnichainMarketplace'
 import type { Instruction } from '../types/omnichain'
-import {
-  runtimeERC20BalanceOf,
-  greaterThanOrEqualTo
-} from '@biconomy/abstractjs'
 
 const ACROSS_SPOKE_POOL_POLYGON = '0x9295ee1d8C5b022Be115A2AD3c30C72E34e7F096'
 const ACROSS_SPOKE_POOL_BASE = '0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64'
@@ -53,6 +49,9 @@ export default function CrossChainUSDTTest() {
   const [baseBalance, setBaseBalance] = useState<string>('0')
   const [isLoadingBalances, setIsLoadingBalances] = useState(false)
   const [balanceError, setBalanceError] = useState<string>('')
+
+  // Transfer amount state
+  const [transferAmount, setTransferAmount] = useState<string>('0.1')
 
   // Fetch balances
   const fetchBalances = async () => {
@@ -113,6 +112,17 @@ export default function CrossChainUSDTTest() {
       return
     }
 
+    const amount = parseFloat(transferAmount)
+    if (isNaN(amount) || amount <= 0) {
+      setError('Please enter a valid amount')
+      return
+    }
+
+    if (amount > parseFloat(polygonBalance)) {
+      setError('Insufficient balance on Polygon')
+      return
+    }
+
     setIsLoading(true)
     setError('')
     setStatus('')
@@ -121,6 +131,7 @@ export default function CrossChainUSDTTest() {
     try {
       console.log('🧪 Testing USDT transfer: Polygon → Base')
       console.log('Your address:', userAddress)
+      console.log('Transfer amount:', `${amount} USDT`)
       console.log('USDT on Polygon:', USDT_POLYGON)
       console.log('USDT on Base:', USDT_BASE)
 
@@ -137,12 +148,8 @@ export default function CrossChainUSDTTest() {
           chainId: polygon.id,
           tokenAddress: USDT_POLYGON,
           spender: ACROSS_SPOKE_POOL_POLYGON,
-          // Use runtime balance - will approve exact amount available
-          amount: runtimeERC20BalanceOf({
-            tokenAddress: USDT_POLYGON,
-            targetAddress: orchestratorAddressPolygon,
-            constraints: [greaterThanOrEqualTo(1n)], // At least 0.000001 USDT
-          }),
+          // Approve the specified amount from user input
+          amount: parseUnits(amount.toString(), 6),
         },
       })
 
@@ -182,13 +189,9 @@ export default function CrossChainUSDTTest() {
             userAddress, // recipient (send to your EOA on Base)
             USDT_POLYGON, // input token (Polygon)
             USDT_BASE, // output token (Base)
-            // Use runtime balance - will bridge ALL available USDT
-            runtimeERC20BalanceOf({
-              tokenAddress: USDT_POLYGON,
-              targetAddress: orchestratorAddressPolygon,
-              constraints: [greaterThanOrEqualTo(1n)],
-            }),
-            parseUnits('0.98', 6), // Expected output (approx, after fees)
+            // Use the specified amount from user input
+            parseUnits(amount.toString(), 6),
+            parseUnits((amount * 0.98).toString(), 6), // Expected output (approx, after 2% fees)
             base.id, // destination chain (8453 - Base)
             '0x0000000000000000000000000000000000000000', // no exclusive relayer
             Math.floor(Date.now() / 1000), // current timestamp
@@ -251,6 +254,17 @@ export default function CrossChainUSDTTest() {
       return
     }
 
+    const amount = parseFloat(transferAmount)
+    if (isNaN(amount) || amount <= 0) {
+      setError('Please enter a valid amount')
+      return
+    }
+
+    if (amount > parseFloat(baseBalance)) {
+      setError('Insufficient balance on Base')
+      return
+    }
+
     setIsLoading(true)
     setError('')
     setStatus('')
@@ -259,6 +273,7 @@ export default function CrossChainUSDTTest() {
     try {
       console.log('🔄 Testing REVERSE USDT transfer: Base → Polygon')
       console.log('Your address:', userAddress)
+      console.log('Transfer amount:', `${amount} USDT`)
 
       setStatus('Building reverse transfer instructions...')
 
@@ -273,8 +288,8 @@ export default function CrossChainUSDTTest() {
           chainId: base.id,
           tokenAddress: USDT_BASE,
           spender: ACROSS_SPOKE_POOL_BASE,
-          // Approve fixed amount to stay within gas limits
-          amount: parseUnits('0.5', 6), // Approve 0.5 USDT
+          // Approve the specified amount
+          amount: parseUnits(amount.toString(), 6),
         },
       })
 
@@ -314,9 +329,9 @@ export default function CrossChainUSDTTest() {
             userAddress, // recipient (send to your EOA on Polygon)
             USDT_BASE, // input token (Base)
             USDT_POLYGON, // output token (Polygon)
-            // Transfer smaller amount to stay within gas limits
-            parseUnits('0.5', 6), // Transfer 0.5 USDT (half your balance)
-            parseUnits('0.49', 6), // Expected output (approx, after fees)
+            // Transfer the specified amount
+            parseUnits(amount.toString(), 6),
+            parseUnits((amount * 0.98).toString(), 6), // Expected output (approx, after 2% fees)
             polygon.id, // destination chain (137 - Polygon)
             '0x0000000000000000000000000000000000000000', // no exclusive relayer
             Math.floor(Date.now() / 1000), // current timestamp
@@ -489,10 +504,79 @@ export default function CrossChainUSDTTest() {
         </div>
       </div>
 
+      {/* Amount Input */}
+      <div style={{
+        padding: '1.5rem',
+        backgroundColor: '#fff',
+        borderRadius: '8px',
+        marginBottom: '1rem',
+        border: '2px solid #2196F3'
+      }}>
+        <h4 style={{ color: '#000', marginBottom: '1rem' }}>💸 Transfer Amount</h4>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', color: '#666', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+              Amount (USDT)
+            </label>
+            <input
+              type="number"
+              value={transferAmount}
+              onChange={(e) => setTransferAmount(e.target.value)}
+              step="0.01"
+              min="0"
+              max={Math.max(parseFloat(polygonBalance), parseFloat(baseBalance))}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                fontSize: '1.1rem',
+                border: '2px solid #ddd',
+                borderRadius: '8px',
+                color: '#000',
+                backgroundColor: '#fff'
+              }}
+              placeholder="0.1"
+            />
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              onClick={() => setTransferAmount((parseFloat(polygonBalance) / 2).toFixed(2))}
+              style={{
+                padding: '0.75rem 1rem',
+                backgroundColor: '#f5f5f5',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+                color: '#000'
+              }}
+            >
+              50%
+            </button>
+            <button
+              onClick={() => setTransferAmount(Math.max(parseFloat(polygonBalance), parseFloat(baseBalance)).toString())}
+              style={{
+                padding: '0.75rem 1rem',
+                backgroundColor: '#f5f5f5',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+                color: '#000'
+              }}
+            >
+              MAX
+            </button>
+          </div>
+        </div>
+        <p style={{ color: '#666', fontSize: '0.85rem', marginTop: '0.5rem', marginBottom: 0 }}>
+          💡 Tip: Use 50% or MAX buttons for quick selection
+        </p>
+      </div>
+
       {/* Test Buttons */}
       <div style={{ marginBottom: '1rem' }}>
         <p style={{ color: '#000', marginBottom: '0.75rem', fontWeight: '600' }}>
-          Available Tests:
+          Transfer Directions:
         </p>
         <button
           onClick={testCrossChainTransfer}
