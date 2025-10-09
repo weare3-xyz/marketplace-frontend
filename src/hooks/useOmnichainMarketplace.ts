@@ -120,12 +120,11 @@ export function useOmnichainMarketplace(
       const newMeeClient = await createOmnichainMEEClient(newOrchestrator, apiKey)
       setMeeClient(newMeeClient)
 
-      // Step 3: Sign authorizations (checks storage first)
-      console.log('Getting authorizations...')
+      // Step 3: Sign universal authorization (checks storage first)
+      console.log('Getting universal authorization...')
       const newAuthorizations = await getOrSignAuthorizations(
         wallet,
-        signAuthorization,
-        false // Use per-chain authorizations for better compatibility
+        signAuthorization
       )
       setAuthorizations(newAuthorizations)
 

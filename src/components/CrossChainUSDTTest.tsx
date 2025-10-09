@@ -298,80 +298,6 @@ export default function CrossChainUSDTTest() {
     }
   }
 
-  // Simple transfer test (without bridging)
-  const testSimpleTransfer = async () => {
-    if (!orchestrator || !meeClient || !authorizations || !userAddress) {
-      setError('Not initialized')
-      return
-    }
-
-    setIsLoading(true)
-    setError('')
-    setStatus('')
-    setTxHash('')
-
-    try {
-      console.log('🧪 Testing simple USDT transfer on Polygon')
-
-      setStatus('Building transfer instruction...')
-
-      // Transfer USDT to yourself on Polygon (simple test)
-      const transferInstruction = await orchestrator.buildComposable({
-        type: 'default',
-        data: {
-          chainId: polygon.id,
-          to: USDT_POLYGON,
-          abi: [
-            {
-              name: 'transfer',
-              type: 'function',
-              stateMutability: 'nonpayable',
-              inputs: [
-                { name: 'to', type: 'address' },
-                { name: 'amount', type: 'uint256' },
-              ],
-              outputs: [{ name: '', type: 'bool' }],
-            },
-          ],
-          functionName: 'transfer',
-          args: [
-            userAddress,
-            parseUnits('0.01', 6), // Transfer 0.01 USDT
-          ],
-        },
-      })
-
-      setStatus('Getting quote...')
-
-      const quote = await meeClient.getQuote({
-        instructions: [transferInstruction] as Instruction[],
-        delegate: true,
-        authorizations: Object.values(authorizations),
-        sponsorship: true,
-      })
-
-      setStatus('Executing transfer...')
-
-      const { hash } = await meeClient.executeQuote({ quote })
-      setTxHash(hash)
-
-      setStatus('Waiting for confirmation...')
-
-      await meeClient.waitForSupertransactionReceipt({ hash })
-
-      setStatus(`✅ Simple transfer successful!`)
-
-      const meeScanLink = `https://meescan.biconomy.io/details/${hash}`
-      window.open(meeScanLink, '_blank')
-
-    } catch (err) {
-      console.error('❌ Transfer failed:', err)
-      setError(err instanceof Error ? err.message : 'Transfer failed')
-      setStatus('')
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   if (!wallet) {
     return (
@@ -417,10 +343,9 @@ export default function CrossChainUSDTTest() {
         <ul style={{ color: '#000', fontSize: '0.9rem', marginLeft: '1.5rem', marginBottom: '0.5rem' }}>
           <li>🚀 <strong>Polygon → Base:</strong> Move USDT from Polygon to Base</li>
           <li>🔄 <strong>Base → Polygon:</strong> Move USDT back from Base to Polygon</li>
-          <li>🧪 <strong>Simple Test:</strong> Test transfer on Polygon only (no bridging)</li>
         </ul>
         <p style={{ color: '#000', fontSize: '0.9rem', fontStyle: 'italic' }}>
-          Using Across Protocol bridge (~1-2 minutes per transfer)
+          ⚡ Using Across Protocol bridge (~1-2 minutes per transfer) | 100% Gasless
         </p>
       </div>
 
@@ -453,19 +378,6 @@ export default function CrossChainUSDTTest() {
           }}
         >
           {isLoading ? 'Processing...' : '🔄 Transfer: Base → Polygon'}
-        </button>
-
-        <button
-          onClick={testSimpleTransfer}
-          disabled={isLoading}
-          className="secondary-button"
-          style={{
-            marginBottom: '0.5rem',
-            fontSize: '14px',
-            padding: '10px 20px'
-          }}
-        >
-          {isLoading ? 'Processing...' : '🧪 Simple Test (Polygon only)'}
         </button>
       </div>
 
