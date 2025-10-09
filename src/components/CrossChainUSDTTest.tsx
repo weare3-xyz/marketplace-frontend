@@ -5,10 +5,10 @@
  * Your current balance: 0.9915 USDT on Polygon
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useWallets } from '@privy-io/react-auth'
 import { polygon, base } from 'viem/chains'
-import { parseUnits } from 'viem'
+import { parseUnits, createPublicClient, http, formatUnits } from 'viem'
 import { useOmnichainMarketplace } from '../hooks/useOmnichainMarketplace'
 import type { Instruction } from '../types/omnichain'
 import {
@@ -20,6 +20,16 @@ const ACROSS_SPOKE_POOL_POLYGON = '0x9295ee1d8C5b022Be115A2AD3c30C72E34e7F096'
 const ACROSS_SPOKE_POOL_BASE = '0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64'
 const USDT_POLYGON = '0xc2132D05D31c914a87C6611C10748AEb04B58e8F'
 const USDT_BASE = '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2'
+
+const ERC20_ABI = [
+  {
+    name: 'balanceOf',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'account', type: 'address' }],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+] as const
 
 export default function CrossChainUSDTTest() {
   const { wallets } = useWallets()
@@ -37,6 +47,64 @@ export default function CrossChainUSDTTest() {
   const [status, setStatus] = useState('')
   const [txHash, setTxHash] = useState('')
   const [error, setError] = useState('')
+
+  // Balance state
+  const [polygonBalance, setPolygonBalance] = useState<string>('0')
+  const [baseBalance, setBaseBalance] = useState<string>('0')
+  const [isLoadingBalances, setIsLoadingBalances] = useState(false)
+  const [balanceError, setBalanceError] = useState<string>('')
+
+  // Fetch balances
+  const fetchBalances = async () => {
+    if (!userAddress) return
+
+    setIsLoadingBalances(true)
+    setBalanceError('')
+
+    try {
+      // Create public clients
+      const polygonClient = createPublicClient({
+        chain: polygon,
+        transport: http(),
+      })
+
+      const baseClient = createPublicClient({
+        chain: base,
+        transport: http(),
+      })
+
+      // Fetch balances in parallel
+      const [polygonBal, baseBal] = await Promise.all([
+        polygonClient.readContract({
+          address: USDT_POLYGON,
+          abi: ERC20_ABI,
+          functionName: 'balanceOf',
+          args: [userAddress as `0x${string}`],
+        }),
+        baseClient.readContract({
+          address: USDT_BASE,
+          abi: ERC20_ABI,
+          functionName: 'balanceOf',
+          args: [userAddress as `0x${string}`],
+        }),
+      ])
+
+      setPolygonBalance(formatUnits(polygonBal, 6))
+      setBaseBalance(formatUnits(baseBal, 6))
+    } catch (err) {
+      console.error('Failed to fetch balances:', err)
+      setBalanceError('Failed to fetch balances')
+    } finally {
+      setIsLoadingBalances(false)
+    }
+  }
+
+  // Fetch balances on mount and when userAddress changes
+  useEffect(() => {
+    if (userAddress && isInitialized) {
+      fetchBalances()
+    }
+  }, [userAddress, isInitialized])
 
   // Test: Move USDT from Polygon to Base
   const testCrossChainTransfer = async () => {
@@ -164,6 +232,9 @@ export default function CrossChainUSDTTest() {
       const meeScanLink = `https://meescan.biconomy.io/details/${hash}`
       window.open(meeScanLink, '_blank')
 
+      // Refresh balances after successful transfer
+      setTimeout(() => fetchBalances(), 2000) // Wait 2s for chain to update
+
     } catch (err) {
       console.error('❌ Transfer failed:', err)
       setError(err instanceof Error ? err.message : 'Transfer failed')
@@ -289,6 +360,9 @@ export default function CrossChainUSDTTest() {
       const meeScanLink = `https://meescan.biconomy.io/details/${hash}`
       window.open(meeScanLink, '_blank')
 
+      // Refresh balances after successful transfer
+      setTimeout(() => fetchBalances(), 2000) // Wait 2s for chain to update
+
     } catch (err) {
       console.error('❌ Reverse transfer failed:', err)
       setError(err instanceof Error ? err.message : 'Reverse transfer failed')
@@ -328,6 +402,7 @@ export default function CrossChainUSDTTest() {
         🧪 Cross-Chain USDT Transfer Test
       </h3>
 
+      {/* Wallet Info */}
       <div style={{
         padding: '1rem',
         backgroundColor: '#fff',
@@ -337,19 +412,88 @@ export default function CrossChainUSDTTest() {
         <p style={{ color: '#000', marginBottom: '0.5rem' }}>
           <strong>Your Wallet:</strong> {userAddress}
         </p>
-        <p style={{ color: '#000', marginBottom: '0.5rem' }}>
-          <strong>Available Tests:</strong>
-        </p>
-        <ul style={{ color: '#000', fontSize: '0.9rem', marginLeft: '1.5rem', marginBottom: '0.5rem' }}>
-          <li>🚀 <strong>Polygon → Base:</strong> Move USDT from Polygon to Base</li>
-          <li>🔄 <strong>Base → Polygon:</strong> Move USDT back from Base to Polygon</li>
-        </ul>
         <p style={{ color: '#000', fontSize: '0.9rem', fontStyle: 'italic' }}>
           ⚡ Using Across Protocol bridge (~1-2 minutes per transfer) | 100% Gasless
         </p>
       </div>
 
+      {/* Balance Display */}
+      <div style={{
+        padding: '1.5rem',
+        backgroundColor: '#e8f5e9',
+        borderRadius: '8px',
+        marginBottom: '1rem',
+        border: '2px solid #4CAF50'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h4 style={{ color: '#000', margin: 0 }}>💰 Your USDT Balances</h4>
+          <button
+            onClick={fetchBalances}
+            disabled={isLoadingBalances}
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: '#fff',
+              border: '1px solid #4CAF50',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '0.85rem',
+              color: '#000'
+            }}
+          >
+            {isLoadingBalances ? '⏳ Loading...' : '🔄 Refresh'}
+          </button>
+        </div>
+
+        {balanceError ? (
+          <p style={{ color: '#c62828', fontSize: '0.9rem' }}>❌ {balanceError}</p>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div style={{
+              padding: '1rem',
+              backgroundColor: '#fff',
+              borderRadius: '8px',
+              border: '2px solid #8B5CF6'
+            }}>
+              <div style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>🟣</div>
+              <p style={{ color: '#666', fontSize: '0.85rem', margin: '0 0 0.25rem 0' }}>Polygon</p>
+              <p style={{ color: '#000', fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>
+                {isLoadingBalances ? '...' : `${polygonBalance} USDT`}
+              </p>
+            </div>
+
+            <div style={{
+              padding: '1rem',
+              backgroundColor: '#fff',
+              borderRadius: '8px',
+              border: '2px solid #0052FF'
+            }}>
+              <div style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>🔵</div>
+              <p style={{ color: '#666', fontSize: '0.85rem', margin: '0 0 0.25rem 0' }}>Base</p>
+              <p style={{ color: '#000', fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>
+                {isLoadingBalances ? '...' : `${baseBalance} USDT`}
+              </p>
+            </div>
+          </div>
+        )}
+
+        <div style={{
+          marginTop: '1rem',
+          padding: '0.75rem',
+          backgroundColor: '#fff',
+          borderRadius: '6px',
+          border: '1px solid #ddd'
+        }}>
+          <p style={{ color: '#000', margin: 0, fontSize: '0.9rem' }}>
+            <strong>Total:</strong> {isLoadingBalances ? '...' : `${(parseFloat(polygonBalance) + parseFloat(baseBalance)).toFixed(2)} USDT`}
+          </p>
+        </div>
+      </div>
+
+      {/* Test Buttons */}
       <div style={{ marginBottom: '1rem' }}>
+        <p style={{ color: '#000', marginBottom: '0.75rem', fontWeight: '600' }}>
+          Available Tests:
+        </p>
         <button
           onClick={testCrossChainTransfer}
           disabled={isLoading}
