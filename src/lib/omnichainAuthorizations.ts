@@ -15,26 +15,26 @@ import { NEXUS_IMPLEMENTATION, SUPPORTED_CHAINS } from './omnichainOrchestrator'
 // ============================================================================
 
 /**
- * Sign EIP-7702 authorizations for all supported chains
+ * Sign universal EIP-7702 authorization for all supported chains
  *
  * **What EIP-7702 authorization does:**
  * - Temporarily "installs" smart account code on your EOA
  * - Your address stays the same, but gains smart account superpowers during transaction
  * - Powers include: batching, gasless txns, cross-chain orchestration, token gas payment
  *
+ * **Universal Authorization (chainId: 0):**
+ * - Valid on ALL chains with ONE signature
+ * - Can be stored and replayed for future sessions
+ * - Recommended by Biconomy for best UX
+ *
  * **Process:**
- * 1. User signs one authorization per chain
- * 2. Authorization includes: Nexus contract address, chain ID, nonce
+ * 1. User signs ONE authorization with chainId: 0
+ * 2. Authorization includes: Nexus contract address, chainId: 0, nonce
  * 3. Authorizations are included in MEE quotes
  * 4. During execution, MEE relayer uses these to delegate smart account logic to EOA
  *
- * **Universal vs Per-Chain:**
- * - Universal (chainId: 0): Valid on ALL chains, but may not be supported by all wallets
- * - Per-chain: More compatible, user signs once per chain
- *
  * @param wallet - Privy connected wallet
  * @param signAuthorizationFn - Privy's useSign7702Authorization hook function
- * @param useUniversal - If true, sign one universal auth for all chains (chainId: 0)
  * @returns Object mapping chainId → Authorization
  *
  * @example
@@ -52,50 +52,26 @@ import { NEXUS_IMPLEMENTATION, SUPPORTED_CHAINS } from './omnichainOrchestrator'
  */
 export async function signOmnichainAuthorizations(
   _wallet: ConnectedWallet,
-  signAuthorizationFn: ReturnType<typeof useSign7702Authorization>['signAuthorization'],
-  useUniversal = false
+  signAuthorizationFn: ReturnType<typeof useSign7702Authorization>['signAuthorization']
 ): Promise<OmnichainAuthorizations> {
   try {
     const authorizations: OmnichainAuthorizations = {}
 
-    if (useUniversal) {
-      // Option 1: Universal authorization (chainId: 0)
-      // Valid on ALL chains with one signature
-      console.log('Signing universal EIP-7702 authorization...')
+    // Universal authorization (chainId: 0)
+    // Valid on ALL chains with one signature
+    console.log('Signing universal EIP-7702 authorization...')
 
-      const universalAuth = await signAuthorizationFn({
-        contractAddress: NEXUS_IMPLEMENTATION,
-        chainId: 0, // Universal: valid on all chains
-      })
+    const universalAuth = await signAuthorizationFn({
+      contractAddress: NEXUS_IMPLEMENTATION,
+      chainId: 0, // Universal: valid on all chains
+    })
 
-      // Store universal auth for all chains
-      SUPPORTED_CHAINS.forEach((chain) => {
-        authorizations[chain.id] = universalAuth as unknown as Authorization
-      })
+    // Store universal auth for all chains
+    SUPPORTED_CHAINS.forEach((chain) => {
+      authorizations[chain.id] = universalAuth as unknown as Authorization
+    })
 
-      console.log('✅ Universal authorization signed (valid on all chains)')
-    } else {
-      // Option 2: Per-chain authorizations
-      // More compatible, but requires one signature per chain
-      console.log(
-        `Signing EIP-7702 authorizations for ${SUPPORTED_CHAINS.length} chains...`
-      )
-
-      for (const chain of SUPPORTED_CHAINS) {
-        console.log(`Requesting signature for ${chain.name} (chainId: ${chain.id})...`)
-
-        const auth = await signAuthorizationFn({
-          contractAddress: NEXUS_IMPLEMENTATION,
-          chainId: chain.id,
-        })
-
-        authorizations[chain.id] = auth as unknown as Authorization
-
-        console.log(`✅ ${chain.name} authorization signed`)
-      }
-
-      console.log('✅ All chain authorizations signed')
-    }
+    console.log('✅ Universal authorization signed (valid on all chains)')
 
     return authorizations
   } catch (error) {
@@ -108,77 +84,11 @@ export async function signOmnichainAuthorizations(
   }
 }
 
-// ============================================================================
-// Authorization for Specific Chain
-// ============================================================================
-
-/**
- * Sign authorization for a single chain
- *
- * Useful when you only need to execute on one chain
- *
- * @param chainId - Chain ID to sign for
- * @param signAuthorizationFn - Privy's sign function
- * @returns Single authorization object
- *
- * @example
- * ```tsx
- * const { signAuthorization } = useSign7702Authorization()
- * const baseAuth = await signAuthorizationForChain(8453, signAuthorization)
- * ```
- */
-export async function signAuthorizationForChain(
-  chainId: number,
-  signAuthorizationFn: ReturnType<typeof useSign7702Authorization>['signAuthorization']
-): Promise<Authorization> {
-  try {
-    console.log(`Signing EIP-7702 authorization for chain ${chainId}...`)
-
-    const auth = await signAuthorizationFn({
-      contractAddress: NEXUS_IMPLEMENTATION,
-      chainId,
-    })
-
-    console.log(`✅ Authorization signed for chain ${chainId}`)
-
-    return auth as unknown as Authorization
-  } catch (error) {
-    console.error(`Failed to sign authorization for chain ${chainId}:`, error)
-    throw new Error(
-      `Failed to sign authorization for chain ${chainId}: ${
-        error instanceof Error ? error.message : 'Unknown error'
-      }`
-    )
-  }
-}
 
 // ============================================================================
 // Authorization Helpers
 // ============================================================================
 
-/**
- * Get authorizations for specific chains only
- *
- * @param allAuthorizations - All signed authorizations
- * @param chainIds - Array of chain IDs to filter
- * @returns Filtered authorizations
- *
- * @example
- * ```ts
- * const baseOptimismAuths = getAuthorizationsForChains(
- *   allAuths,
- *   [8453, 10] // Base and Optimism only
- * )
- * ```
- */
-export function getAuthorizationsForChains(
-  allAuthorizations: OmnichainAuthorizations,
-  chainIds: number[]
-): Authorization[] {
-  return chainIds
-    .map((chainId) => allAuthorizations[chainId])
-    .filter((auth): auth is Authorization => auth !== undefined)
-}
 
 /**
  * Check if authorization exists for a chain
@@ -315,7 +225,6 @@ export function clearStoredAuthorizations(userAddress: string): void {
  *
  * @param wallet - Privy connected wallet
  * @param signAuthorizationFn - Privy's sign function
- * @param useUniversal - Use universal auth (chainId: 0)
  * @returns Authorizations (from storage or newly signed)
  *
  * @example
@@ -327,8 +236,7 @@ export function clearStoredAuthorizations(userAddress: string): void {
  */
 export async function getOrSignAuthorizations(
   wallet: ConnectedWallet,
-  signAuthorizationFn: ReturnType<typeof useSign7702Authorization>['signAuthorization'],
-  useUniversal = false
+  signAuthorizationFn: ReturnType<typeof useSign7702Authorization>['signAuthorization']
 ): Promise<OmnichainAuthorizations> {
   // Check storage first
   const stored = getStoredAuthorizations(wallet.address)
@@ -338,12 +246,11 @@ export async function getOrSignAuthorizations(
     return stored
   }
 
-  // Not in storage, sign new
-  console.log('No stored authorizations found, requesting signatures...')
+  // Not in storage, sign new universal authorization
+  console.log('No stored authorizations found, requesting universal signature...')
   const authorizations = await signOmnichainAuthorizations(
     wallet,
-    signAuthorizationFn,
-    useUniversal
+    signAuthorizationFn
   )
 
   // Store for session

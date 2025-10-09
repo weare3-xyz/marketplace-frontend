@@ -5,21 +5,27 @@
  * Your current balance: 0.9915 USDT on Polygon
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useWallets } from '@privy-io/react-auth'
 import { polygon, base } from 'viem/chains'
-import { parseUnits } from 'viem'
+import { parseUnits, createPublicClient, http, formatUnits } from 'viem'
 import { useOmnichainMarketplace } from '../hooks/useOmnichainMarketplace'
 import type { Instruction } from '../types/omnichain'
-import {
-  runtimeERC20BalanceOf,
-  greaterThanOrEqualTo
-} from '@biconomy/abstractjs'
 
 const ACROSS_SPOKE_POOL_POLYGON = '0x9295ee1d8C5b022Be115A2AD3c30C72E34e7F096'
 const ACROSS_SPOKE_POOL_BASE = '0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64'
 const USDT_POLYGON = '0xc2132D05D31c914a87C6611C10748AEb04B58e8F'
 const USDT_BASE = '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2'
+
+const ERC20_ABI = [
+  {
+    name: 'balanceOf',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'account', type: 'address' }],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+] as const
 
 export default function CrossChainUSDTTest() {
   const { wallets } = useWallets()
@@ -38,10 +44,82 @@ export default function CrossChainUSDTTest() {
   const [txHash, setTxHash] = useState('')
   const [error, setError] = useState('')
 
+  // Balance state
+  const [polygonBalance, setPolygonBalance] = useState<string>('0')
+  const [baseBalance, setBaseBalance] = useState<string>('0')
+  const [isLoadingBalances, setIsLoadingBalances] = useState(false)
+  const [balanceError, setBalanceError] = useState<string>('')
+
+  // Transfer amount state
+  const [transferAmount, setTransferAmount] = useState<string>('0.1')
+
+  // Fetch balances
+  const fetchBalances = async () => {
+    if (!userAddress) return
+
+    setIsLoadingBalances(true)
+    setBalanceError('')
+
+    try {
+      // Create public clients
+      const polygonClient = createPublicClient({
+        chain: polygon,
+        transport: http(),
+      })
+
+      const baseClient = createPublicClient({
+        chain: base,
+        transport: http(),
+      })
+
+      // Fetch balances in parallel
+      const [polygonBal, baseBal] = await Promise.all([
+        polygonClient.readContract({
+          address: USDT_POLYGON,
+          abi: ERC20_ABI,
+          functionName: 'balanceOf',
+          args: [userAddress as `0x${string}`],
+        }),
+        baseClient.readContract({
+          address: USDT_BASE,
+          abi: ERC20_ABI,
+          functionName: 'balanceOf',
+          args: [userAddress as `0x${string}`],
+        }),
+      ])
+
+      setPolygonBalance(formatUnits(polygonBal, 6))
+      setBaseBalance(formatUnits(baseBal, 6))
+    } catch (err) {
+      console.error('Failed to fetch balances:', err)
+      setBalanceError('Failed to fetch balances')
+    } finally {
+      setIsLoadingBalances(false)
+    }
+  }
+
+  // Fetch balances on mount and when userAddress changes
+  useEffect(() => {
+    if (userAddress && isInitialized) {
+      fetchBalances()
+    }
+  }, [userAddress, isInitialized])
+
   // Test: Move USDT from Polygon to Base
   const testCrossChainTransfer = async () => {
     if (!orchestrator || !meeClient || !authorizations || !userAddress) {
       setError('Not initialized')
+      return
+    }
+
+    const amount = parseFloat(transferAmount)
+    if (isNaN(amount) || amount <= 0) {
+      setError('Please enter a valid amount')
+      return
+    }
+
+    if (amount > parseFloat(polygonBalance)) {
+      setError('Insufficient balance on Polygon')
       return
     }
 
@@ -53,6 +131,7 @@ export default function CrossChainUSDTTest() {
     try {
       console.log('🧪 Testing USDT transfer: Polygon → Base')
       console.log('Your address:', userAddress)
+      console.log('Transfer amount:', `${amount} USDT`)
       console.log('USDT on Polygon:', USDT_POLYGON)
       console.log('USDT on Base:', USDT_BASE)
 
@@ -69,12 +148,8 @@ export default function CrossChainUSDTTest() {
           chainId: polygon.id,
           tokenAddress: USDT_POLYGON,
           spender: ACROSS_SPOKE_POOL_POLYGON,
-          // Use runtime balance - will approve exact amount available
-          amount: runtimeERC20BalanceOf({
-            tokenAddress: USDT_POLYGON,
-            targetAddress: orchestratorAddressPolygon,
-            constraints: [greaterThanOrEqualTo(1n)], // At least 0.000001 USDT
-          }),
+          // Approve the specified amount from user input
+          amount: parseUnits(amount.toString(), 6),
         },
       })
 
@@ -114,13 +189,9 @@ export default function CrossChainUSDTTest() {
             userAddress, // recipient (send to your EOA on Base)
             USDT_POLYGON, // input token (Polygon)
             USDT_BASE, // output token (Base)
-            // Use runtime balance - will bridge ALL available USDT
-            runtimeERC20BalanceOf({
-              tokenAddress: USDT_POLYGON,
-              targetAddress: orchestratorAddressPolygon,
-              constraints: [greaterThanOrEqualTo(1n)],
-            }),
-            parseUnits('0.98', 6), // Expected output (approx, after fees)
+            // Use the specified amount from user input
+            parseUnits(amount.toString(), 6),
+            parseUnits((amount * 0.98).toString(), 6), // Expected output (approx, after 2% fees)
             base.id, // destination chain (8453 - Base)
             '0x0000000000000000000000000000000000000000', // no exclusive relayer
             Math.floor(Date.now() / 1000), // current timestamp
@@ -164,6 +235,9 @@ export default function CrossChainUSDTTest() {
       const meeScanLink = `https://meescan.biconomy.io/details/${hash}`
       window.open(meeScanLink, '_blank')
 
+      // Refresh balances after successful transfer
+      setTimeout(() => fetchBalances(), 2000) // Wait 2s for chain to update
+
     } catch (err) {
       console.error('❌ Transfer failed:', err)
       setError(err instanceof Error ? err.message : 'Transfer failed')
@@ -180,6 +254,17 @@ export default function CrossChainUSDTTest() {
       return
     }
 
+    const amount = parseFloat(transferAmount)
+    if (isNaN(amount) || amount <= 0) {
+      setError('Please enter a valid amount')
+      return
+    }
+
+    if (amount > parseFloat(baseBalance)) {
+      setError('Insufficient balance on Base')
+      return
+    }
+
     setIsLoading(true)
     setError('')
     setStatus('')
@@ -188,6 +273,7 @@ export default function CrossChainUSDTTest() {
     try {
       console.log('🔄 Testing REVERSE USDT transfer: Base → Polygon')
       console.log('Your address:', userAddress)
+      console.log('Transfer amount:', `${amount} USDT`)
 
       setStatus('Building reverse transfer instructions...')
 
@@ -202,8 +288,8 @@ export default function CrossChainUSDTTest() {
           chainId: base.id,
           tokenAddress: USDT_BASE,
           spender: ACROSS_SPOKE_POOL_BASE,
-          // Approve fixed amount to stay within gas limits
-          amount: parseUnits('0.5', 6), // Approve 0.5 USDT
+          // Approve the specified amount
+          amount: parseUnits(amount.toString(), 6),
         },
       })
 
@@ -243,9 +329,9 @@ export default function CrossChainUSDTTest() {
             userAddress, // recipient (send to your EOA on Polygon)
             USDT_BASE, // input token (Base)
             USDT_POLYGON, // output token (Polygon)
-            // Transfer smaller amount to stay within gas limits
-            parseUnits('0.5', 6), // Transfer 0.5 USDT (half your balance)
-            parseUnits('0.49', 6), // Expected output (approx, after fees)
+            // Transfer the specified amount
+            parseUnits(amount.toString(), 6),
+            parseUnits((amount * 0.98).toString(), 6), // Expected output (approx, after 2% fees)
             polygon.id, // destination chain (137 - Polygon)
             '0x0000000000000000000000000000000000000000', // no exclusive relayer
             Math.floor(Date.now() / 1000), // current timestamp
@@ -289,6 +375,9 @@ export default function CrossChainUSDTTest() {
       const meeScanLink = `https://meescan.biconomy.io/details/${hash}`
       window.open(meeScanLink, '_blank')
 
+      // Refresh balances after successful transfer
+      setTimeout(() => fetchBalances(), 2000) // Wait 2s for chain to update
+
     } catch (err) {
       console.error('❌ Reverse transfer failed:', err)
       setError(err instanceof Error ? err.message : 'Reverse transfer failed')
@@ -298,80 +387,6 @@ export default function CrossChainUSDTTest() {
     }
   }
 
-  // Simple transfer test (without bridging)
-  const testSimpleTransfer = async () => {
-    if (!orchestrator || !meeClient || !authorizations || !userAddress) {
-      setError('Not initialized')
-      return
-    }
-
-    setIsLoading(true)
-    setError('')
-    setStatus('')
-    setTxHash('')
-
-    try {
-      console.log('🧪 Testing simple USDT transfer on Polygon')
-
-      setStatus('Building transfer instruction...')
-
-      // Transfer USDT to yourself on Polygon (simple test)
-      const transferInstruction = await orchestrator.buildComposable({
-        type: 'default',
-        data: {
-          chainId: polygon.id,
-          to: USDT_POLYGON,
-          abi: [
-            {
-              name: 'transfer',
-              type: 'function',
-              stateMutability: 'nonpayable',
-              inputs: [
-                { name: 'to', type: 'address' },
-                { name: 'amount', type: 'uint256' },
-              ],
-              outputs: [{ name: '', type: 'bool' }],
-            },
-          ],
-          functionName: 'transfer',
-          args: [
-            userAddress,
-            parseUnits('0.01', 6), // Transfer 0.01 USDT
-          ],
-        },
-      })
-
-      setStatus('Getting quote...')
-
-      const quote = await meeClient.getQuote({
-        instructions: [transferInstruction] as Instruction[],
-        delegate: true,
-        authorizations: Object.values(authorizations),
-        sponsorship: true,
-      })
-
-      setStatus('Executing transfer...')
-
-      const { hash } = await meeClient.executeQuote({ quote })
-      setTxHash(hash)
-
-      setStatus('Waiting for confirmation...')
-
-      await meeClient.waitForSupertransactionReceipt({ hash })
-
-      setStatus(`✅ Simple transfer successful!`)
-
-      const meeScanLink = `https://meescan.biconomy.io/details/${hash}`
-      window.open(meeScanLink, '_blank')
-
-    } catch (err) {
-      console.error('❌ Transfer failed:', err)
-      setError(err instanceof Error ? err.message : 'Transfer failed')
-      setStatus('')
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   if (!wallet) {
     return (
@@ -402,6 +417,7 @@ export default function CrossChainUSDTTest() {
         🧪 Cross-Chain USDT Transfer Test
       </h3>
 
+      {/* Wallet Info */}
       <div style={{
         padding: '1rem',
         backgroundColor: '#fff',
@@ -411,20 +427,157 @@ export default function CrossChainUSDTTest() {
         <p style={{ color: '#000', marginBottom: '0.5rem' }}>
           <strong>Your Wallet:</strong> {userAddress}
         </p>
-        <p style={{ color: '#000', marginBottom: '0.5rem' }}>
-          <strong>Available Tests:</strong>
-        </p>
-        <ul style={{ color: '#000', fontSize: '0.9rem', marginLeft: '1.5rem', marginBottom: '0.5rem' }}>
-          <li>🚀 <strong>Polygon → Base:</strong> Move USDT from Polygon to Base</li>
-          <li>🔄 <strong>Base → Polygon:</strong> Move USDT back from Base to Polygon</li>
-          <li>🧪 <strong>Simple Test:</strong> Test transfer on Polygon only (no bridging)</li>
-        </ul>
         <p style={{ color: '#000', fontSize: '0.9rem', fontStyle: 'italic' }}>
-          Using Across Protocol bridge (~1-2 minutes per transfer)
+          ⚡ Using Across Protocol bridge (~1-2 minutes per transfer) | 100% Gasless
         </p>
       </div>
 
+      {/* Balance Display */}
+      <div style={{
+        padding: '1.5rem',
+        backgroundColor: '#e8f5e9',
+        borderRadius: '8px',
+        marginBottom: '1rem',
+        border: '2px solid #4CAF50'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h4 style={{ color: '#000', margin: 0 }}>💰 Your USDT Balances</h4>
+          <button
+            onClick={fetchBalances}
+            disabled={isLoadingBalances}
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: '#fff',
+              border: '1px solid #4CAF50',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '0.85rem',
+              color: '#000'
+            }}
+          >
+            {isLoadingBalances ? '⏳ Loading...' : '🔄 Refresh'}
+          </button>
+        </div>
+
+        {balanceError ? (
+          <p style={{ color: '#c62828', fontSize: '0.9rem' }}>❌ {balanceError}</p>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div style={{
+              padding: '1rem',
+              backgroundColor: '#fff',
+              borderRadius: '8px',
+              border: '2px solid #8B5CF6'
+            }}>
+              <div style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>🟣</div>
+              <p style={{ color: '#666', fontSize: '0.85rem', margin: '0 0 0.25rem 0' }}>Polygon</p>
+              <p style={{ color: '#000', fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>
+                {isLoadingBalances ? '...' : `${polygonBalance} USDT`}
+              </p>
+            </div>
+
+            <div style={{
+              padding: '1rem',
+              backgroundColor: '#fff',
+              borderRadius: '8px',
+              border: '2px solid #0052FF'
+            }}>
+              <div style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>🔵</div>
+              <p style={{ color: '#666', fontSize: '0.85rem', margin: '0 0 0.25rem 0' }}>Base</p>
+              <p style={{ color: '#000', fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>
+                {isLoadingBalances ? '...' : `${baseBalance} USDT`}
+              </p>
+            </div>
+          </div>
+        )}
+
+        <div style={{
+          marginTop: '1rem',
+          padding: '0.75rem',
+          backgroundColor: '#fff',
+          borderRadius: '6px',
+          border: '1px solid #ddd'
+        }}>
+          <p style={{ color: '#000', margin: 0, fontSize: '0.9rem' }}>
+            <strong>Total:</strong> {isLoadingBalances ? '...' : `${(parseFloat(polygonBalance) + parseFloat(baseBalance)).toFixed(2)} USDT`}
+          </p>
+        </div>
+      </div>
+
+      {/* Amount Input */}
+      <div style={{
+        padding: '1.5rem',
+        backgroundColor: '#fff',
+        borderRadius: '8px',
+        marginBottom: '1rem',
+        border: '2px solid #2196F3'
+      }}>
+        <h4 style={{ color: '#000', marginBottom: '1rem' }}>💸 Transfer Amount</h4>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', color: '#666', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+              Amount (USDT)
+            </label>
+            <input
+              type="number"
+              value={transferAmount}
+              onChange={(e) => setTransferAmount(e.target.value)}
+              step="0.01"
+              min="0"
+              max={Math.max(parseFloat(polygonBalance), parseFloat(baseBalance))}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                fontSize: '1.1rem',
+                border: '2px solid #ddd',
+                borderRadius: '8px',
+                color: '#000',
+                backgroundColor: '#fff'
+              }}
+              placeholder="0.1"
+            />
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              onClick={() => setTransferAmount((parseFloat(polygonBalance) / 2).toFixed(2))}
+              style={{
+                padding: '0.75rem 1rem',
+                backgroundColor: '#f5f5f5',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+                color: '#000'
+              }}
+            >
+              50%
+            </button>
+            <button
+              onClick={() => setTransferAmount(Math.max(parseFloat(polygonBalance), parseFloat(baseBalance)).toString())}
+              style={{
+                padding: '0.75rem 1rem',
+                backgroundColor: '#f5f5f5',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+                color: '#000'
+              }}
+            >
+              MAX
+            </button>
+          </div>
+        </div>
+        <p style={{ color: '#666', fontSize: '0.85rem', marginTop: '0.5rem', marginBottom: 0 }}>
+          💡 Tip: Use 50% or MAX buttons for quick selection
+        </p>
+      </div>
+
+      {/* Test Buttons */}
       <div style={{ marginBottom: '1rem' }}>
+        <p style={{ color: '#000', marginBottom: '0.75rem', fontWeight: '600' }}>
+          Transfer Directions:
+        </p>
         <button
           onClick={testCrossChainTransfer}
           disabled={isLoading}
@@ -453,19 +606,6 @@ export default function CrossChainUSDTTest() {
           }}
         >
           {isLoading ? 'Processing...' : '🔄 Transfer: Base → Polygon'}
-        </button>
-
-        <button
-          onClick={testSimpleTransfer}
-          disabled={isLoading}
-          className="secondary-button"
-          style={{
-            marginBottom: '0.5rem',
-            fontSize: '14px',
-            padding: '10px 20px'
-          }}
-        >
-          {isLoading ? 'Processing...' : '🧪 Simple Test (Polygon only)'}
         </button>
       </div>
 
