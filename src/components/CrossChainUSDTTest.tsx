@@ -112,6 +112,14 @@ export default function CrossChainUSDTTest() {
       return
     }
 
+    // Debug: Check authorizations
+    console.log('🔍 Checking authorizations:', authorizations)
+    console.log('Available chains:', Object.keys(authorizations))
+    if (!authorizations[137]) {
+      setError('Polygon authorization missing. Please refresh the page to re-sign authorizations.')
+      return
+    }
+
     const amount = parseFloat(transferAmount)
     if (isNaN(amount) || amount <= 0) {
       setError('Please enter a valid amount')
@@ -207,10 +215,11 @@ export default function CrossChainUSDTTest() {
       setStatus('Getting quote from MEE...')
 
       // Get quote from MEE
+      // Since we're using universal authorization (chainId: 0), pass a single authorization
       const quote = await meeClient.getQuote({
         instructions: [approveInstruction, bridgeInstruction] as Instruction[],
         delegate: true,
-        authorizations: Object.values(authorizations),
+        authorization: authorizations[137], // Use universal auth (works for all chains)
         sponsorship: true, // Gasless transaction
       })
 
@@ -347,10 +356,11 @@ export default function CrossChainUSDTTest() {
       setStatus('Getting quote from MEE...')
 
       // Get quote from MEE
+      // Since we're using universal authorization (chainId: 0), pass a single authorization
       const quote = await meeClient.getQuote({
         instructions: [approveInstruction, bridgeInstruction] as Instruction[],
         delegate: true,
-        authorizations: Object.values(authorizations),
+        authorization: authorizations[137], // Use universal auth (works for all chains)
         sponsorship: true, // Gasless transaction
       })
 

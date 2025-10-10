@@ -75,12 +75,40 @@ export default function OmnichainDemo() {
         borderRadius: '12px',
         marginBottom: '2rem'
       }}>
-        <h4 style={{ color: '#000', marginBottom: '1rem' }}>✅ System Status: Ready</h4>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+          <h4 style={{ color: '#000', margin: 0 }}>✅ System Status: Ready</h4>
+          <button
+            onClick={() => {
+              sessionStorage.clear()
+              localStorage.clear()
+              window.location.reload()
+            }}
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: '#fff',
+              border: '1px solid #f44336',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '0.85rem',
+              color: '#f44336'
+            }}
+          >
+            🔄 Reset & Re-authorize
+          </button>
+        </div>
         <div style={{ display: 'grid', gap: '0.5rem' }}>
           <p style={{ color: '#000', margin: 0 }}><strong>Address:</strong> {userAddress}</p>
           <p style={{ color: '#000', margin: 0 }}><strong>Orchestrator:</strong> {orchestrator ? '✅ Created' : '❌ Not created'}</p>
           <p style={{ color: '#000', margin: 0 }}><strong>MEE Client:</strong> {meeClient ? '✅ Connected' : '❌ Not connected'}</p>
           <p style={{ color: '#000', margin: 0 }}><strong>Authorizations:</strong> {authorizations ? `✅ Signed (${Object.keys(authorizations).length} chains)` : '❌ Not signed'}</p>
+          {authorizations && (
+            <p style={{ color: '#666', margin: 0, fontSize: '0.85rem' }}>
+              Chains: {Object.keys(authorizations).map(id => {
+                const chainNames: Record<string, string> = {'8453': 'Base', '10': 'Optimism', '137': 'Polygon', '42161': 'Arbitrum', '1': 'Ethereum'}
+                return chainNames[id] || id
+              }).join(', ')}
+            </p>
+          )}
         </div>
       </div>
 
